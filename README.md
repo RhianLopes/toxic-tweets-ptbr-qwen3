@@ -115,17 +115,16 @@ toxic-tweets-ptbr-qwen3/
 ├── notebooks/
 │   ├── 01_exploratory_analysis.ipynb
 │   ├── 02_sampling.ipynb
-│   ├── 03_zero_shot.ipynb
-│   ├── 04_few_shot.ipynb
-│   ├── 05_chain_of_thought.ipynb
+│   ├── 03_ollama_setup.ipynb
+│   ├── 04_zero_shot.ipynb
+│   ├── 05_few_shot.ipynb
 │   └── 06_results_analysis.ipynb
-├── src/
-│   ├── prompts.py
-│   ├── classifier.py
-│   ├── metrics.py
-│   └── utils.py
 ├── results/
-├── PLAN.md                           # Planejamento detalhado do projeto
+│   ├── zero_shot_results.csv
+│   ├── few_shot_results.csv
+│   ├── predictions_comparison.csv
+│   ├── metrics_per_strategy.csv
+│   └── metrics_summary.json
 └── pyproject.toml
 ```
 
@@ -197,17 +196,6 @@ Validação da infraestrutura de inferência local antes dos experimentos.
 > Com `think: true` (padrão), o modelo entra em modo CoT e leva vários minutos por inferência — inviável para 500 tweets. `think: false` é obrigatório para os experimentos.
 
 Estimativa para os 500 tweets da amostra: **~2 minutos por experimento**.
-
----
-
-## Próximos passos
-
-- [x] Fase 3 — Setup Ollama + Qwen3.5 e teste de conexão (`03_ollama_setup.ipynb`)
-- [ ] Fase 4 — Experimento Zero-shot (`03_zero_shot.ipynb`)
-- [ ] Fase 5 — Experimento Few-shot (`04_few_shot.ipynb`)
-- [ ] Fase 6 — Experimento Chain-of-Thought (`05_chain_of_thought.ipynb`)
-- [ ] Fase 7 — Análise comparativa (`06_results_analysis.ipynb`)
-- [ ] Fase 8 — Artigo no Medium
 
 ---
 

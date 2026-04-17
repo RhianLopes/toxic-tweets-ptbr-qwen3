@@ -29,7 +29,7 @@ uv sync
 
 ## Project goal
 
-Evaluate **Qwen3** (via Ollama, 100% local) on toxic content moderation in Brazilian Portuguese, using the **ToLD-Br** dataset. Three prompting strategies are compared: zero-shot, few-shot, and chain-of-thought. Primary metric: **F1-macro** (accuracy is misleading due to class imbalance).
+Evaluate **Qwen3.5** (via Ollama, 100% local) on toxic content moderation in Brazilian Portuguese, using the **ToLD-Br** dataset. Two prompting strategies are compared: zero-shot and few-shot. Primary metric: **F1-macro** (accuracy is misleading due to class imbalance).
 
 ## Dataset
 
@@ -45,10 +45,9 @@ Evaluate **Qwen3** (via Ollama, 100% local) on toxic content moderation in Brazi
 | `01_exploratory_analysis.ipynb` | Done | EDA do ToLD-Br |
 | `02_sampling.ipynb` | Done | `data/sample/toldBr_sample_500.csv` |
 | `03_ollama_setup.ipynb` | Done | Setup e benchmark do Ollama |
-| `03_zero_shot.ipynb` | Pending | `results/zero_shot_results.csv` |
-| `04_few_shot.ipynb` | Pending | `results/few_shot_results.csv` |
-| `05_chain_of_thought.ipynb` | Pending | `results/cot_results.csv` |
-| `06_results_analysis.ipynb` | Pending | `results/metrics_summary.json` |
+| `04_zero_shot.ipynb` | Done | `results/zero_shot_results.csv` |
+| `05_few_shot.ipynb` | Done | `results/few_shot_results.csv` |
+| `06_results_analysis.ipynb` | Done | `results/metrics_summary.json` |
 
 ## Ollama / model
 
