@@ -12,9 +12,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Common commands
 
 ```bash
-# Run a script
-uv run python main.py
-
 # Execute a notebook (headless)
 uv run python -m nbconvert --to notebook --execute --inplace notebooks/<notebook>.ipynb --ExecutePreprocessor.timeout=120
 

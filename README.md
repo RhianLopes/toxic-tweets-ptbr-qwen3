@@ -20,7 +20,7 @@ Classificação de comentários tóxicos em português brasileiro usando **Qwen3
 ### 1. Clonar o repositório
 
 ```bash
-git clone https://github.com/SEU_USUARIO/toxic-tweets-ptbr-qwen3.git
+git clone https://github.com/RhianLopes/toxic-tweets-ptbr-qwen3.git
 cd toxic-tweets-ptbr-qwen3
 ```
 
