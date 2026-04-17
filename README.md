@@ -8,7 +8,7 @@ Classificação de comentários tóxicos em português brasileiro usando **Qwen3
 
 - Python 3.14 (instalado via [python.org](https://www.python.org/downloads/))
 - [uv](https://docs.astral.sh/uv/getting-started/installation/)
-- [Ollama](https://ollama.com/download)
+- WSL 2 com Ubuntu 24.04
 - GPU com 12 GB+ de VRAM (testado na RTX 5070)
 
 > **Windows:** o Python deve ser instalado pelo installer oficial do python.org. Instalações gerenciadas pelo `uv` (`AppData\Roaming\uv\python\`) são bloqueadas pela política de Controle de Aplicativo do Windows e impedem o kernel do Jupyter de iniciar.
@@ -39,19 +39,56 @@ uv run python -m ipykernel install --user --name toxic-tweets --display-name "Py
 
 Abra qualquer notebook e selecione o kernel **Python 3.14 (toxic-tweets)**.
 
-### 4. Instalar e configurar o Ollama
+### 4. Instalar e configurar o Ollama (via WSL)
 
-```bash
-# Após instalar o Ollama, baixar o modelo
-ollama pull qwen3:14b    # recomendado para 12 GB+ VRAM
-# ou
-ollama pull qwen3:8b     # versão mais leve
+O Ollama roda no WSL para aproveitar a GPU via CUDA.
+
+**4.1 — Habilitar rede espelhada no WSL**
+
+Crie/edite `C:\Users\<SEU_USUARIO>\.wslconfig`:
+
+```ini
+[wsl2]
+networkingMode=mirrored
 ```
 
-Verificar se está rodando:
+Reinicie o WSL:
+
+```powershell
+wsl --shutdown
+```
+
+**4.2 — Instalar o WSL Ubuntu 24.04**
+
+```powershell
+wsl --install Ubuntu-24.04
+```
+
+**4.3 — Instalar o Ollama no WSL**
 
 ```bash
-ollama list
+sudo apt-get install -y zstd
+curl -fsSL https://ollama.com/install.sh | sh
+```
+
+**4.4 — Configurar Ollama para aceitar conexões do Windows**
+
+```bash
+sudo mkdir -p /etc/systemd/system/ollama.service.d
+sudo sh -c 'echo "[Service]" > /etc/systemd/system/ollama.service.d/override.conf && echo "Environment=OLLAMA_HOST=0.0.0.0" >> /etc/systemd/system/ollama.service.d/override.conf'
+sudo systemctl daemon-reload && sudo systemctl restart ollama
+```
+
+**4.5 — Baixar o modelo**
+
+```bash
+ollama pull qwen3.5:9b
+```
+
+Verificar se está rodando (do Windows):
+
+```bash
+curl http://127.0.0.1:11434
 ```
 
 ---
@@ -140,9 +177,32 @@ Saída: `data/sample/toldBr_sample_500.csv`
 
 ---
 
+### Fase 3 — Setup Ollama + Qwen3.5 (`03_ollama_setup.ipynb`)
+
+Validação da infraestrutura de inferência local antes dos experimentos.
+
+**Ambiente:**
+- Ollama rodando no WSL (Ubuntu 24.04) com GPU via CUDA
+- Modelo: `qwen3.5:9b` (6,6 GB VRAM)
+- GPU: NVIDIA RTX 5070 (12 GB VRAM)
+
+**Benchmark de inferência (zero-shot, `think: false`):**
+
+| Métrica | Valor |
+|---|---|
+| Tokens/s | 126,9 |
+| Latência por tweet | 0,22s |
+| Tokens gerados (classificação) | 3 |
+
+> Com `think: true` (padrão), o modelo entra em modo CoT e leva vários minutos por inferência — inviável para 500 tweets. `think: false` é obrigatório para os experimentos.
+
+Estimativa para os 500 tweets da amostra: **~2 minutos por experimento**.
+
+---
+
 ## Próximos passos
 
-- [ ] Fase 3 — Setup Ollama + Qwen3 e teste de conexão
+- [x] Fase 3 — Setup Ollama + Qwen3.5 e teste de conexão (`03_ollama_setup.ipynb`)
 - [ ] Fase 4 — Experimento Zero-shot (`03_zero_shot.ipynb`)
 - [ ] Fase 5 — Experimento Few-shot (`04_few_shot.ipynb`)
 - [ ] Fase 6 — Experimento Chain-of-Thought (`05_chain_of_thought.ipynb`)
@@ -155,4 +215,4 @@ Saída: `data/sample/toldBr_sample_500.csv`
 
 - [ToLD-Br — dataset original](https://github.com/joaoaleite/ToLD-Br) (os CSVs já estão em `data/raw/` neste repositório)
 - [Ollama](https://ollama.com)
-- [Qwen3 — Alibaba Cloud](https://qwenlm.github.io/blog/qwen3/)
+- [Qwen3.5](https://ollama.com/library/qwen3.5)

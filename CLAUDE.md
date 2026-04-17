@@ -44,6 +44,7 @@ Evaluate **Qwen3** (via Ollama, 100% local) on toxic content moderation in Brazi
 |---|---|---|
 | `01_exploratory_analysis.ipynb` | Done | EDA do ToLD-Br |
 | `02_sampling.ipynb` | Done | `data/sample/toldBr_sample_500.csv` |
+| `03_ollama_setup.ipynb` | Done | Setup e benchmark do Ollama |
 | `03_zero_shot.ipynb` | Pending | `results/zero_shot_results.csv` |
 | `04_few_shot.ipynb` | Pending | `results/few_shot_results.csv` |
 | `05_chain_of_thought.ipynb` | Pending | `results/cot_results.csv` |
@@ -51,9 +52,31 @@ Evaluate **Qwen3** (via Ollama, 100% local) on toxic content moderation in Brazi
 
 ## Ollama / model
 
-- Model: `qwen3:14b` (Q4 ~9 GB VRAM) or `qwen3:8b`
-- API base: `http://localhost:11434`
-- Endpoint: `POST /api/generate` with `{"model": "qwen3:14b", "prompt": "...", "stream": false}`
+- Model: `qwen3.5:9b` — instalado no WSL (Ubuntu 24.04), ~6.6 GB VRAM
+- GPU: NVIDIA RTX 5070 (12 GB VRAM) — detectada pelo Ollama via WSL
+- API base: `http://127.0.0.1:11434` (usar IP explícito, não `localhost` — evita resolução IPv6)
+- Endpoint: `POST /api/generate` com `{"model": "qwen3.5:9b", "prompt": "...", "stream": false, "think": false}`
+- **`think: false` é obrigatório** — sem isso o modelo entra em modo CoT e gera centenas de tokens antes de responder, tornando a classificação inviável (~3 min por tweet vs 0.22s)
+- Velocidade medida: **126.9 tokens/s, 0.22s de latência** por classificação
+
+## Ollama no WSL — configuração
+
+O Ollama roda no WSL (Ubuntu 24.04), não no Windows nativo. Configurações necessárias:
+
+1. **`~/.wslconfig`** (em `C:\Users\USER\`) — habilita rede espelhada para expor portas do WSL ao Windows:
+   ```ini
+   [wsl2]
+   networkingMode=mirrored
+   ```
+
+2. **`OLLAMA_HOST=0.0.0.0`** — necessário mesmo com mirrored networking para o Ollama aceitar conexões de fora do loopback WSL:
+   ```
+   /etc/systemd/system/ollama.service.d/override.conf
+   [Service]
+   Environment=OLLAMA_HOST=0.0.0.0
+   ```
+
+3. O serviço é gerenciado pelo systemd e inicia automaticamente com o WSL.
 
 ## Key findings so far
 
