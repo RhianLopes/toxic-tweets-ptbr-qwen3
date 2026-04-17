@@ -45,9 +45,25 @@ Evaluate **Qwen3.5** (via Ollama, 100% local) on toxic content moderation in Bra
 | `01_exploratory_analysis.ipynb` | Done | EDA do ToLD-Br |
 | `02_sampling.ipynb` | Done | `data/sample/toldBr_sample_500.csv` |
 | `03_ollama_setup.ipynb` | Done | Setup e benchmark do Ollama |
-| `04_zero_shot.ipynb` | Done | `results/zero_shot_results.csv` |
-| `05_few_shot.ipynb` | Done | `results/few_shot_results.csv` |
+| `04_zero_shot_v1_base.ipynb` | Done | `results/zero_shot_v1_base.csv` |
+| `04_zero_shot_v2_descriptions.ipynb` | Done | `results/zero_shot_v2_descriptions.csv` |
+| `04_zero_shot_v3_no_antibias.ipynb` | Done | `results/zero_shot_v3_no_antibias.csv` |
+| `05_few_shot_v1_1ex.ipynb` | Done | `results/few_shot_v1_1ex.csv` |
+| `05_few_shot_v2_2ex_antibias.ipynb` | Done | `results/few_shot_v2_2ex_antibias.csv` |
+| `05_few_shot_v3_2ex.ipynb` | Done | `results/few_shot_v3_2ex.csv` |
 | `06_results_analysis.ipynb` | Done | `results/metrics_summary.json` |
+
+## Variantes de prompting
+
+### Zero-Shot (04)
+- **v1 Base** — instrução mínima com lista de categorias
+- **v2 Descriptions** — instrução com descrição textual de cada categoria
+- **v3 No-Antibias** — v1 sem instrução de mitigação de viés
+
+### Few-Shot (05)
+- **v1 1-Example** — 1 exemplo por categoria no prompt
+- **v2 2ex+Antibias** — 2 exemplos + instrução de mitigação de viés
+- **v3 2-Examples** — 2 exemplos sem instrução de viés
 
 ## Ollama / model
 
@@ -77,8 +93,29 @@ O Ollama roda no WSL (Ubuntu 24.04), não no Windows nativo. Configurações nec
 
 3. O serviço é gerenciado pelo systemd e inicia automaticamente com o WSL.
 
-## Key findings so far
+## Key findings
 
+### Dataset
 - `racism` has only 21 examples — proportional sampling yields 0 samples at N=500; handle explicitly if needed
 - Tweet length is similar across categories (~87 chars average); `insult` slightly longer (~93)
 - 361 duplicate tweets (1.72%) exist in the full dataset — already accounted for in the sample
+
+### Resultados dos experimentos (500 tweets, F1-macro)
+
+| Variante | F1-macro | F1-weighted | Accuracy |
+|---|---|---|---|
+| **FS-v1 1-Example** | **0.2994** | 0.7710 | 75.4% |
+| FS-v2 2ex+Antibias | 0.2750 | 0.7712 | 76.0% |
+| ZS-v2 Descriptions | 0.2673 | 0.7050 | 65.6% |
+| FS-v3 2-Examples | 0.2606 | 0.7659 | 76.6% |
+| ZS-v3 No-Antibias | 0.2516 | 0.7197 | 70.4% |
+| ZS-v1 Base | 0.2347 | 0.7317 | 75.2% |
+
+### Interpretações
+- Few-shot supera zero-shot: os 3 melhores F1-macro são todos few-shot
+- Mais exemplos ≠ melhor: FS-v1 (1 exemplo) > FS-v3 (2 exemplos) — prompt mais limpo pode reduzir confusão
+- Instrução de antibias não ajudou: FS-v2 ficou abaixo de FS-v1
+- Classes raras (misogyny, racism, xenophobia) com F1=0 em todas as variantes — insuficiente no sample
+- `not_toxic` estável em ~0.86–0.88 F1 em todas as variantes
+- `obscene` é a categoria tóxica melhor classificada (~0.25–0.41 F1)
+- Accuracy enganosa (65–77%): confirma F1-macro como métrica correta para este dataset

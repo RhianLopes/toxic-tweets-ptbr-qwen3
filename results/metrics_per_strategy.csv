@@ -1,15 +1,43 @@
-estrategia,categoria,f1,precision,recall,support,f1_macro,f1_weighted
-zero_shot,homophobia,0.4,0.3333,0.5,4,0.2673,0.705
-zero_shot,insult,0.3103,0.4091,0.25,36,0.2673,0.705
-zero_shot,misogyny,0.0,0.0,0.0,1,0.2673,0.705
-zero_shot,not_toxic,0.7928,0.9019,0.7072,403,0.2673,0.705
-zero_shot,obscene,0.3678,0.2689,0.5818,55,0.2673,0.705
-zero_shot,racism,0.0,0.0,0.0,0,0.2673,0.705
-zero_shot,xenophobia,0.0,0.0,0.0,1,0.2673,0.705
-few_shot,homophobia,0.3636,0.2857,0.5,4,0.275,0.7712
-few_shot,insult,0.2857,0.5385,0.1944,36,0.275,0.7712
-few_shot,misogyny,0.0,0.0,0.0,1,0.275,0.7712
-few_shot,not_toxic,0.8726,0.8872,0.8586,403,0.275,0.7712
-few_shot,obscene,0.4032,0.3623,0.4545,55,0.275,0.7712
-few_shot,racism,0.0,0.0,0.0,0,0.275,0.7712
-few_shot,xenophobia,0.0,0.0,0.0,1,0.275,0.7712
+estrategia,label,grupo,categoria,f1,precision,recall,support,f1_macro,f1_weighted
+zs_v1_base,ZS-v1 Base,zero_shot,homophobia,0.4444,0.4,0.5,4,0.2347,0.7317
+zs_v1_base,ZS-v1 Base,zero_shot,insult,0.087,0.2,0.0556,36,0.2347,0.7317
+zs_v1_base,ZS-v1 Base,zero_shot,misogyny,0.0,0.0,0.0,1,0.2347,0.7317
+zs_v1_base,ZS-v1 Base,zero_shot,not_toxic,0.8616,0.8299,0.8958,403,0.2347,0.7317
+zs_v1_base,ZS-v1 Base,zero_shot,obscene,0.25,0.3333,0.2,55,0.2347,0.7317
+zs_v1_base,ZS-v1 Base,zero_shot,racism,0.0,0.0,0.0,0,0.2347,0.7317
+zs_v1_base,ZS-v1 Base,zero_shot,xenophobia,0.0,0.0,0.0,1,0.2347,0.7317
+zs_v2_descriptions,ZS-v2 Descriptions,zero_shot,homophobia,0.4,0.3333,0.5,4,0.2673,0.705
+zs_v2_descriptions,ZS-v2 Descriptions,zero_shot,insult,0.3103,0.4091,0.25,36,0.2673,0.705
+zs_v2_descriptions,ZS-v2 Descriptions,zero_shot,misogyny,0.0,0.0,0.0,1,0.2673,0.705
+zs_v2_descriptions,ZS-v2 Descriptions,zero_shot,not_toxic,0.7928,0.9019,0.7072,403,0.2673,0.705
+zs_v2_descriptions,ZS-v2 Descriptions,zero_shot,obscene,0.3678,0.2689,0.5818,55,0.2673,0.705
+zs_v2_descriptions,ZS-v2 Descriptions,zero_shot,racism,0.0,0.0,0.0,0,0.2673,0.705
+zs_v2_descriptions,ZS-v2 Descriptions,zero_shot,xenophobia,0.0,0.0,0.0,1,0.2673,0.705
+zs_v3_no_antibias,ZS-v3 No-Antibias,zero_shot,homophobia,0.4444,0.4,0.5,4,0.2516,0.7197
+zs_v3_no_antibias,ZS-v3 No-Antibias,zero_shot,insult,0.1395,0.4286,0.0833,36,0.2516,0.7197
+zs_v3_no_antibias,ZS-v3 No-Antibias,zero_shot,misogyny,0.0,0.0,0.0,1,0.2516,0.7197
+zs_v3_no_antibias,ZS-v3 No-Antibias,zero_shot,not_toxic,0.8284,0.8629,0.7965,403,0.2516,0.7197
+zs_v3_no_antibias,ZS-v3 No-Antibias,zero_shot,obscene,0.349,0.2766,0.4727,55,0.2516,0.7197
+zs_v3_no_antibias,ZS-v3 No-Antibias,zero_shot,racism,0.0,0.0,0.0,0,0.2516,0.7197
+zs_v3_no_antibias,ZS-v3 No-Antibias,zero_shot,xenophobia,0.0,0.0,0.0,1,0.2516,0.7197
+fs_v1_1ex,FS-v1 1-Example,few_shot,homophobia,0.5,0.5,0.5,4,0.2994,0.771
+fs_v1_1ex,FS-v1 1-Example,few_shot,insult,0.3137,0.5333,0.2222,36,0.2994,0.771
+fs_v1_1ex,FS-v1 1-Example,few_shot,misogyny,0.0,0.0,0.0,1,0.2994,0.771
+fs_v1_1ex,FS-v1 1-Example,few_shot,not_toxic,0.867,0.8945,0.8412,403,0.2994,0.771
+fs_v1_1ex,FS-v1 1-Example,few_shot,obscene,0.4148,0.35,0.5091,55,0.2994,0.771
+fs_v1_1ex,FS-v1 1-Example,few_shot,racism,0.0,0.0,0.0,0,0.2994,0.771
+fs_v1_1ex,FS-v1 1-Example,few_shot,xenophobia,0.0,0.0,0.0,1,0.2994,0.771
+fs_v2_2ex_antibias,FS-v2 2ex+Antibias,few_shot,homophobia,0.3636,0.2857,0.5,4,0.275,0.7712
+fs_v2_2ex_antibias,FS-v2 2ex+Antibias,few_shot,insult,0.2857,0.5385,0.1944,36,0.275,0.7712
+fs_v2_2ex_antibias,FS-v2 2ex+Antibias,few_shot,misogyny,0.0,0.0,0.0,1,0.275,0.7712
+fs_v2_2ex_antibias,FS-v2 2ex+Antibias,few_shot,not_toxic,0.8726,0.8872,0.8586,403,0.275,0.7712
+fs_v2_2ex_antibias,FS-v2 2ex+Antibias,few_shot,obscene,0.4032,0.3623,0.4545,55,0.275,0.7712
+fs_v2_2ex_antibias,FS-v2 2ex+Antibias,few_shot,racism,0.0,0.0,0.0,0,0.275,0.7712
+fs_v2_2ex_antibias,FS-v2 2ex+Antibias,few_shot,xenophobia,0.0,0.0,0.0,1,0.275,0.7712
+fs_v3_2ex,FS-v3 2-Examples,few_shot,homophobia,0.4,0.3333,0.5,4,0.2606,0.7659
+fs_v3_2ex,FS-v3 2-Examples,few_shot,insult,0.1364,0.375,0.0833,36,0.2606,0.7659
+fs_v3_2ex,FS-v3 2-Examples,few_shot,misogyny,0.0,0.0,0.0,1,0.2606,0.7659
+fs_v3_2ex,FS-v3 2-Examples,few_shot,not_toxic,0.8781,0.8803,0.8759,403,0.2606,0.7659
+fs_v3_2ex,FS-v3 2-Examples,few_shot,obscene,0.4098,0.3731,0.4545,55,0.2606,0.7659
+fs_v3_2ex,FS-v3 2-Examples,few_shot,racism,0.0,0.0,0.0,0,0.2606,0.7659
+fs_v3_2ex,FS-v3 2-Examples,few_shot,xenophobia,0.0,0.0,0.0,1,0.2606,0.7659

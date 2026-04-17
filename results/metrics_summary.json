@@ -1,5 +1,60 @@
 {
-  "zero_shot": {
+  "zs_v1_base": {
+    "label": "ZS-v1 Base",
+    "grupo": "zero_shot",
+    "f1_macro": 0.2347,
+    "f1_weighted": 0.7317,
+    "precision_macro": 0.2519,
+    "recall_macro": 0.2359,
+    "per_class": {
+      "homophobia": {
+        "f1": 0.4444,
+        "precision": 0.4,
+        "recall": 0.5,
+        "support": 4
+      },
+      "insult": {
+        "f1": 0.087,
+        "precision": 0.2,
+        "recall": 0.0556,
+        "support": 36
+      },
+      "misogyny": {
+        "f1": 0.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "support": 1
+      },
+      "not_toxic": {
+        "f1": 0.8616,
+        "precision": 0.8299,
+        "recall": 0.8958,
+        "support": 403
+      },
+      "obscene": {
+        "f1": 0.25,
+        "precision": 0.3333,
+        "recall": 0.2,
+        "support": 55
+      },
+      "racism": {
+        "f1": 0.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "support": 0
+      },
+      "xenophobia": {
+        "f1": 0.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "support": 1
+      }
+    },
+    "tokens_s_medio": 107.5
+  },
+  "zs_v2_descriptions": {
+    "label": "ZS-v2 Descriptions",
+    "grupo": "zero_shot",
     "f1_macro": 0.2673,
     "f1_weighted": 0.705,
     "precision_macro": 0.2733,
@@ -48,10 +103,117 @@
         "support": 1
       }
     },
-    "tokens_s_medio": 106.7,
-    "tempo_total_s": 140.2
+    "tokens_s_medio": 106.7
   },
-  "few_shot": {
+  "zs_v3_no_antibias": {
+    "label": "ZS-v3 No-Antibias",
+    "grupo": "zero_shot",
+    "f1_macro": 0.2516,
+    "f1_weighted": 0.7197,
+    "precision_macro": 0.2812,
+    "recall_macro": 0.2647,
+    "per_class": {
+      "homophobia": {
+        "f1": 0.4444,
+        "precision": 0.4,
+        "recall": 0.5,
+        "support": 4
+      },
+      "insult": {
+        "f1": 0.1395,
+        "precision": 0.4286,
+        "recall": 0.0833,
+        "support": 36
+      },
+      "misogyny": {
+        "f1": 0.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "support": 1
+      },
+      "not_toxic": {
+        "f1": 0.8284,
+        "precision": 0.8629,
+        "recall": 0.7965,
+        "support": 403
+      },
+      "obscene": {
+        "f1": 0.349,
+        "precision": 0.2766,
+        "recall": 0.4727,
+        "support": 55
+      },
+      "racism": {
+        "f1": 0.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "support": 0
+      },
+      "xenophobia": {
+        "f1": 0.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "support": 1
+      }
+    },
+    "tokens_s_medio": 105.4
+  },
+  "fs_v1_1ex": {
+    "label": "FS-v1 1-Example",
+    "grupo": "few_shot",
+    "f1_macro": 0.2994,
+    "f1_weighted": 0.771,
+    "precision_macro": 0.3254,
+    "recall_macro": 0.2961,
+    "per_class": {
+      "homophobia": {
+        "f1": 0.5,
+        "precision": 0.5,
+        "recall": 0.5,
+        "support": 4
+      },
+      "insult": {
+        "f1": 0.3137,
+        "precision": 0.5333,
+        "recall": 0.2222,
+        "support": 36
+      },
+      "misogyny": {
+        "f1": 0.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "support": 1
+      },
+      "not_toxic": {
+        "f1": 0.867,
+        "precision": 0.8945,
+        "recall": 0.8412,
+        "support": 403
+      },
+      "obscene": {
+        "f1": 0.4148,
+        "precision": 0.35,
+        "recall": 0.5091,
+        "support": 55
+      },
+      "racism": {
+        "f1": 0.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "support": 0
+      },
+      "xenophobia": {
+        "f1": 0.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "support": 1
+      }
+    },
+    "tokens_s_medio": 107.7
+  },
+  "fs_v2_2ex_antibias": {
+    "label": "FS-v2 2ex+Antibias",
+    "grupo": "few_shot",
     "f1_macro": 0.275,
     "f1_weighted": 0.7712,
     "precision_macro": 0.2962,
@@ -100,7 +262,59 @@
         "support": 1
       }
     },
-    "tokens_s_medio": 107.0,
-    "tempo_total_s": 187.3
+    "tokens_s_medio": 107.0
+  },
+  "fs_v3_2ex": {
+    "label": "FS-v3 2-Examples",
+    "grupo": "few_shot",
+    "f1_macro": 0.2606,
+    "f1_weighted": 0.7659,
+    "precision_macro": 0.2803,
+    "recall_macro": 0.2734,
+    "per_class": {
+      "homophobia": {
+        "f1": 0.4,
+        "precision": 0.3333,
+        "recall": 0.5,
+        "support": 4
+      },
+      "insult": {
+        "f1": 0.1364,
+        "precision": 0.375,
+        "recall": 0.0833,
+        "support": 36
+      },
+      "misogyny": {
+        "f1": 0.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "support": 1
+      },
+      "not_toxic": {
+        "f1": 0.8781,
+        "precision": 0.8803,
+        "recall": 0.8759,
+        "support": 403
+      },
+      "obscene": {
+        "f1": 0.4098,
+        "precision": 0.3731,
+        "recall": 0.4545,
+        "support": 55
+      },
+      "racism": {
+        "f1": 0.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "support": 0
+      },
+      "xenophobia": {
+        "f1": 0.0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "support": 1
+      }
+    },
+    "tokens_s_medio": 108.5
   }
 }
