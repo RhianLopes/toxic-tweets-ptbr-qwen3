@@ -100,7 +100,7 @@ O Ollama roda no WSL (Ubuntu 24.04), não no Windows nativo. Configurações nec
 - Tweet length is similar across categories (~87 chars average); `insult` slightly longer (~93)
 - 361 duplicate tweets (1.72%) exist in the full dataset — already accounted for in the sample
 
-### Resultados dos experimentos (500 tweets, F1-macro)
+### Resultados dos experimentos (amostra de 500 tweets — dataset completo ainda a ser avaliado)
 
 | Variante | F1-macro | F1-weighted | Accuracy |
 |---|---|---|---|

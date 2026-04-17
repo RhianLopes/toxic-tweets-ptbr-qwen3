@@ -21,6 +21,8 @@ Dataset: **ToLD-Br** (21.000 tweets anotados). Estratégias avaliadas: 3 variant
 
 > **Métrica principal: F1-macro.** Accuracy é enganosa neste dataset — um classificador que rotula tudo como `not_toxic` acerta ~80% mas é inútil.
 
+> **Escopo atual:** todos os experimentos foram realizados sobre a amostra estratificada de **500 tweets**. A avaliação sobre o dataset completo (21.000 tweets) ainda será feita.
+
 ### F1 por categoria — melhor variante (FS-v1)
 
 | Categoria | F1 | Precision | Recall | Support |
