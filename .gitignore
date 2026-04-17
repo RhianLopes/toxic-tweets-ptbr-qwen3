@@ -15,9 +15,6 @@ __pycache__/
 .ipynb_checkpoints/
 *.ipynb_checkpoints
 
-# Dataset (arquivos grandes — baixar via README)
-data/raw/
-
 # Gerados em runtime
 results/
 *.log

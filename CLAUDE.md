@@ -36,7 +36,7 @@ Evaluate **Qwen3** (via Ollama, 100% local) on toxic content moderation in Brazi
 
 ## Dataset
 
-- **Source:** `data/raw/toldBr_full.csv` — 21.000 tweets, 8 columns (`text` + 6 toxicity scores + `label`)
+- **Source:** `data/raw/toldBr_full.csv` — 21.000 tweets, 8 colunas (`text` + 6 toxicity scores + `label`). CSVs já incluídos no repositório.
 - **Sample:** `data/sample/toldBr_sample_500.csv` — 500 tweets, stratified
 - `label` is derived: the category with highest score ≥ 2, otherwise `not_toxic`
 - Highly imbalanced: `not_toxic` = 80.65%, `racism` = 0.10%

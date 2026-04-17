@@ -39,15 +39,7 @@ uv run python -m ipykernel install --user --name toxic-tweets --display-name "Py
 
 Abra qualquer notebook e selecione o kernel **Python 3.14 (toxic-tweets)**.
 
-### 4. Baixar o dataset ToLD-Br
-
-```bash
-mkdir -p data/raw
-# Baixar o CSV completo (21.000 tweets)
-wget -P data/raw/ https://raw.githubusercontent.com/joaoaleite/ToLD-Br/main/data/toldBr_full.csv
-```
-
-### 5. Instalar e configurar o Ollama
+### 4. Instalar e configurar o Ollama
 
 ```bash
 # Após instalar o Ollama, baixar o modelo
@@ -161,6 +153,6 @@ Saída: `data/sample/toldBr_sample_500.csv`
 
 ## Referências
 
-- [ToLD-Br](https://github.com/joaoaleite/ToLD-Br)
+- [ToLD-Br — dataset original](https://github.com/joaoaleite/ToLD-Br) (os CSVs já estão em `data/raw/` neste repositório)
 - [Ollama](https://ollama.com)
 - [Qwen3 — Alibaba Cloud](https://qwenlm.github.io/blog/qwen3/)
