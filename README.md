@@ -21,7 +21,7 @@ Dataset: **ToLD-Br** (21.000 tweets anotados). Estratégias avaliadas: 3 variant
 
 > **Métrica principal: F1-macro.** Accuracy é enganosa neste dataset — um classificador que rotula tudo como `not_toxic` acerta ~80% mas é inútil.
 
-> **Escopo atual:** todos os experimentos foram realizados sobre a amostra estratificada de **500 tweets**. A avaliação sobre o dataset completo (21.000 tweets) ainda será feita.
+> **Preview dataset completo (ZS-v2 concluído):** F1-macro no full = **0.2875** vs 0.2673 no sample (+0.02). Os resultados restantes estão em execução — notebook `09_results_analysis_full.ipynb` consolida tudo quando os 6 CSVs estiverem prontos.
 
 ### F1 por categoria — melhor variante (FS-v1)
 
@@ -134,14 +134,22 @@ curl http://127.0.0.1:11434
 
 ---
 
-## Executar os notebooks
+## Executar os notebooks e scripts
 
 ```bash
 # Interativo
 uv run python -m jupyter lab
 
-# Headless (todos os notebooks de inferência levam ~2 min cada)
+# Notebooks headless (análises)
 uv run python -m nbconvert --to notebook --execute --inplace notebooks/<notebook>.ipynb --ExecutePreprocessor.timeout=600
+
+# Scripts de inferência no dataset completo (suportam retomada via checkpoint)
+uv run python scripts/07_zero_shot_full_v1_base.py
+uv run python scripts/07_zero_shot_full_v2_descriptions.py
+uv run python scripts/07_zero_shot_full_v3_no_antibias.py
+uv run python scripts/08_few_shot_full_v1_1ex.py
+uv run python scripts/08_few_shot_full_v2_2ex_antibias.py
+uv run python scripts/08_few_shot_full_v3_2ex.py
 ```
 
 ---
@@ -163,7 +171,15 @@ toxic-tweets-ptbr-qwen3/
 │   ├── 05_few_shot_v1_1ex.ipynb
 │   ├── 05_few_shot_v2_2ex_antibias.ipynb
 │   ├── 05_few_shot_v3_2ex.ipynb
-│   └── 06_results_analysis.ipynb
+│   ├── 06_results_analysis.ipynb
+│   └── 09_results_analysis_full.ipynb
+├── scripts/
+│   ├── 07_zero_shot_full_v1_base.py
+│   ├── 07_zero_shot_full_v2_descriptions.py
+│   ├── 07_zero_shot_full_v3_no_antibias.py
+│   ├── 08_few_shot_full_v1_1ex.py
+│   ├── 08_few_shot_full_v2_2ex_antibias.py
+│   └── 08_few_shot_full_v3_2ex.py
 ├── results/
 │   ├── zero_shot_v1_base.csv
 │   ├── zero_shot_v2_descriptions.csv
@@ -176,7 +192,10 @@ toxic-tweets-ptbr-qwen3/
 │   ├── metrics_summary.json
 │   ├── ranking_f1_macro.png
 │   ├── f1_por_categoria.png
-│   └── confusion_matrices.png
+│   ├── confusion_matrices.png
+│   └── full/                                    # Dataset completo (20.813 tweets)
+│       ├── zero_shot_v2_descriptions.csv
+│       └── (demais CSVs em execução)
 └── pyproject.toml
 ```
 
@@ -299,6 +318,34 @@ Consolidação e comparação das 6 variantes.
 - `ranking_f1_macro.png` — ranking horizontal por F1-macro
 - `f1_por_categoria.png` — F1 por categoria em todas as variantes
 - `confusion_matrices.png` — 6 matrizes de confusão lado a lado
+
+---
+
+### Fase 7 — Zero-Shot no dataset completo (`scripts/07_zero_shot_full_v*.py`)
+
+Replicação das 3 variantes zero-shot sobre os 20.813 tweets do dataset completo. Scripts Python com checkpoint a cada 500 tweets para retomada automática em caso de interrupção.
+
+### Fase 8 — Few-Shot no dataset completo (`scripts/08_few_shot_full_v*.py`)
+
+Replicação das 3 variantes few-shot sobre o dataset completo. Mesma estrutura dos scripts da Fase 7.
+
+### Fase 9 — Análise comparativa full (`09_results_analysis_full.ipynb`)
+
+Consolidação e comparação das 6 variantes no dataset completo. Inclui seção de **comparação sample vs. full** para cada variante.
+
+**Preview — ZS-v2 Descriptions (única variante concluída até agora):**
+
+| Métrica | Sample (500) | Full (20.813) | Δ |
+|---|---|---|---|
+| F1-macro | 0.2673 | 0.2875 | +0.02 |
+| F1-weighted | 0.7050 | 0.7240 | +0.02 |
+| Accuracy | 65.6% | 70.1% | +4.5pp |
+
+**Principais achados confirmados:**
+- Sample estratificado foi representativo: Δ F1-macro ≤ 0.02 entre sample e full
+- Classes raras ganham poder de avaliação: `xenophobia` 0→0.18, `misogyny` 0→0.05
+- `insult` piora no full (0.31→0.21): confusão sistemática com `obscene` em escala
+- `not_toxic` estável (~0.79–0.82 F1 em ambos os conjuntos)
 
 ---
 
