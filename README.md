@@ -8,40 +8,69 @@ Dataset: **ToLD-Br** (21.000 tweets anotados). Estratégias avaliadas: 3 variant
 
 ## Resultados
 
-**Melhor variante: Few-Shot com 1 exemplo por categoria — F1-macro = 0.2994**
+### Variantes avaliadas
 
-| # | Variante | F1-macro | F1-weighted | Accuracy |
-|---|---|---|---|---|
-| 1 | **FS-v1 1-Example** | **0.2994** | 0.7710 | 75.4% |
-| 2 | FS-v2 2ex+Antibias | 0.2750 | 0.7712 | 76.0% |
-| 3 | ZS-v2 Descriptions | 0.2673 | 0.7050 | 65.6% |
-| 4 | FS-v3 2-Examples | 0.2606 | 0.7659 | 76.6% |
-| 5 | ZS-v3 No-Antibias | 0.2516 | 0.7197 | 70.4% |
-| 6 | ZS-v1 Base | 0.2347 | 0.7317 | 75.2% |
+| Código | Tipo | O que muda no prompt |
+|---|---|---|
+| **ZS-v1 Base** | Zero-shot | Instrução mínima: lista das 7 categorias |
+| **ZS-v2 Descriptions** | Zero-shot | Lista das categorias + descrição textual do que cada uma significa |
+| **ZS-v3 No-Antibias** | Zero-shot | Igual à ZS-v1, mas sem a instrução de mitigação de viés |
+| **FS-v1 1-Example** | Few-shot | 1 tweet de exemplo por categoria (7 exemplos no total) |
+| **FS-v2 2ex+Antibias** | Few-shot | 2 tweets de exemplo por categoria + instrução de mitigação de viés |
+| **FS-v3 2-Examples** | Few-shot | 2 tweets de exemplo por categoria, sem instrução de viés |
+
+> **Zero-shot**: o modelo classifica sem ver exemplos — só com a instrução. **Few-shot**: o modelo vê exemplos reais de cada categoria antes de classificar.
+
+---
+
+### Dataset completo (20.813 tweets)
+
+**Melhor variante: FS-v2 2ex+Antibias — F1-macro = 0.3173**
+
+| # | Variante | F1-macro | F1-weighted |
+|---|---|---|---|
+| 1 | **FS-v2 2ex+Antibias** | **0.3173** | 0.7666 |
+| 2 | ZS-v2 Descriptions | 0.2875 | 0.7240 |
+| 3 | FS-v3 2-Examples | 0.2747 | 0.7659 |
+| 4 | FS-v1 1-Example | 0.2706 | 0.7547 |
+| 5 | ZS-v1 Base | 0.2238 | 0.7501 |
+| 6 | ZS-v3 No-Antibias | 0.2206 | 0.7376 |
 
 > **Métrica principal: F1-macro.** Accuracy é enganosa neste dataset — um classificador que rotula tudo como `not_toxic` acerta ~80% mas é inútil.
 
-> **Preview dataset completo (ZS-v2 concluído):** F1-macro no full = **0.2875** vs 0.2673 no sample (+0.02). Os resultados restantes estão em execução — notebook `09_results_analysis_full.ipynb` consolida tudo quando os 6 CSVs estiverem prontos.
-
-### F1 por categoria — melhor variante (FS-v1)
+### F1 por categoria — melhor variante no dataset completo (FS-v2)
 
 | Categoria | F1 | Precision | Recall | Support |
 |---|---|---|---|---|
-| not_toxic | 0.8670 | 0.8945 | 0.8412 | 403 |
-| obscene | 0.4148 | 0.3500 | 0.5091 | 55 |
-| homophobia | 0.5000 | 0.5000 | 0.5000 | 4 |
-| insult | 0.3137 | 0.5333 | 0.2222 | 36 |
-| misogyny | 0.0000 | — | — | 1 |
-| racism | 0.0000 | — | — | 0 |
-| xenophobia | 0.0000 | — | — | 1 |
+| not_toxic | 0.8722 | 0.8723 | 0.8720 | 16.783 |
+| obscene | 0.3720 | 0.3526 | 0.3937 | 2.276 |
+| insult | 0.2624 | 0.4303 | 0.1887 | 1.489 |
+| homophobia | 0.4253 | 0.3717 | 0.4970 | 169 |
+| misogyny | 0.0700 | 0.0423 | 0.2045 | 44 |
+| xenophobia | 0.1167 | 0.0670 | 0.4516 | 31 |
+| racism | 0.1023 | 0.0567 | 0.5238 | 21 |
+
+### Amostra de validação (500 tweets)
+
+| # | Variante | F1-macro | F1-weighted |
+|---|---|---|---|
+| 1 | FS-v1 1-Example | 0.2994 | 0.7710 |
+| 2 | FS-v2 2ex+Antibias | 0.2750 | 0.7712 |
+| 3 | ZS-v2 Descriptions | 0.2673 | 0.7050 |
+| 4 | FS-v3 2-Examples | 0.2606 | 0.7659 |
+| 5 | ZS-v3 No-Antibias | 0.2516 | 0.7197 |
+| 6 | ZS-v1 Base | 0.2347 | 0.7317 |
+
+> A amostra foi usada para validação durante o desenvolvimento. FS-v2 era 2º no sample (+0.0423 F1-macro no full) — a inversão de ranking só ficou evidente no dataset completo.
 
 ### Conclusões
 
-- **Few-shot > zero-shot** em F1-macro: os 3 primeiros lugares são todos few-shot
-- **Mais exemplos ≠ melhor**: FS-v1 (1 exemplo) supera FS-v3 (2 exemplos) — prompts menores reduzem ambiguidade
-- **Antibias prejudica**: adicionar instrução de mitigação de viés (FS-v2) reduziu F1-macro vs. FS-v1 simples
-- **Classes raras zeradas**: misogyny, racism e xenophobia ficaram com F1=0 em todas as variantes — insuficientes na amostra de 500 tweets
-- **Velocidade uniforme**: ~107 tokens/s em todas as variantes, independente do tamanho do prompt
+- **FS-v2 domina no dataset completo**: antibias + 2 exemplos mostrou vantagem real em escala — era 2º no sample, assume o 1º lugar com 20k tweets
+- **Sample não discrimina variantes próximas**: FS-v2 e FS-v1 separadas por 0.02 F1 no sample; no full a diferença sobe para 0.047
+- **Few-shot > zero-shot** em F1-macro: 3 das 4 melhores variantes são few-shot
+- **ZS-v2 se destaca entre os zero-shot**: descrições de categoria chegam a 2º lugar geral — compensam parcialmente a ausência de exemplos
+- **Classes raras ganham poder de avaliação**: no dataset completo, racism (21), xenophobia (31) e misogyny (44) saem do zero — FS-v2 atinge F1=0.10/0.12/0.07
+- **Velocidade uniforme**: ~107–127 tokens/s em todas as variantes, independente do tamanho do prompt
 
 ---
 
@@ -194,8 +223,17 @@ toxic-tweets-ptbr-qwen3/
 │   ├── f1_por_categoria.png
 │   ├── confusion_matrices.png
 │   └── full/                                    # Dataset completo (20.813 tweets)
+│       ├── zero_shot_v1_base.csv
 │       ├── zero_shot_v2_descriptions.csv
-│       └── (demais CSVs em execução)
+│       ├── zero_shot_v3_no_antibias.csv
+│       ├── few_shot_v1_1ex.csv
+│       ├── few_shot_v2_2ex_antibias.csv
+│       ├── few_shot_v3_2ex.csv
+│       ├── metrics_summary.json
+│       ├── metrics_per_strategy.csv
+│       ├── ranking_f1_macro.png
+│       ├── f1_por_categoria.png
+│       └── confusion_matrices.png
 └── pyproject.toml
 ```
 
@@ -331,21 +369,36 @@ Replicação das 3 variantes few-shot sobre o dataset completo. Mesma estrutura 
 
 ### Fase 9 — Análise comparativa full (`09_results_analysis_full.ipynb`)
 
-Consolidação e comparação das 6 variantes no dataset completo. Inclui seção de **comparação sample vs. full** para cada variante.
+Consolidação e comparação das 6 variantes no dataset completo (~20.639 tweets válidos). Inclui comparação sample vs. full para cada variante e análise detalhada de classes raras.
 
-**Preview — ZS-v2 Descriptions (única variante concluída até agora):**
+**Ranking final — dataset completo:**
 
-| Métrica | Sample (500) | Full (20.813) | Δ |
+| # | Variante | F1-macro | F1-weighted |
 |---|---|---|---|
-| F1-macro | 0.2673 | 0.2875 | +0.02 |
-| F1-weighted | 0.7050 | 0.7240 | +0.02 |
-| Accuracy | 65.6% | 70.1% | +4.5pp |
+| 1 | **FS-v2 2ex+Antibias** | **0.3173** | 0.7666 |
+| 2 | ZS-v2 Descriptions | 0.2875 | 0.7240 |
+| 3 | FS-v3 2-Examples | 0.2747 | 0.7659 |
+| 4 | FS-v1 1-Example | 0.2706 | 0.7547 |
+| 5 | ZS-v1 Base | 0.2238 | 0.7501 |
+| 6 | ZS-v3 No-Antibias | 0.2206 | 0.7376 |
 
-**Principais achados confirmados:**
-- Sample estratificado foi representativo: Δ F1-macro ≤ 0.02 entre sample e full
-- Classes raras ganham poder de avaliação: `xenophobia` 0→0.18, `misogyny` 0→0.05
-- `insult` piora no full (0.31→0.21): confusão sistemática com `obscene` em escala
-- `not_toxic` estável (~0.79–0.82 F1 em ambos os conjuntos)
+**Comparação sample → full (Δ F1-macro):**
+
+| Variante | Sample | Full | Δ |
+|---|---|---|---|
+| FS-v2 2ex+Antibias | 0.2750 | 0.3173 | +0.0423 |
+| ZS-v2 Descriptions | 0.2673 | 0.2875 | +0.0202 |
+| FS-v3 2-Examples | 0.2606 | 0.2747 | +0.0141 |
+| FS-v1 1-Example | 0.2994 | 0.2706 | −0.0288 |
+| ZS-v1 Base | 0.2347 | 0.2238 | −0.0109 |
+| ZS-v3 No-Antibias | 0.2516 | 0.2206 | −0.0310 |
+
+**Principais achados:**
+- FS-v2 inverte ranking: era 2º no sample, assume 1º no full (+0.04 F1-macro)
+- Sample estratificado foi representativo: magnitudes de Δ ≤ 0.03 para 5 das 6 variantes
+- Classes raras ganham suporte real: racism (21), xenophobia (31) e misogyny (44) deixam de ser zeradas
+- FS-v1 perde −0.029 F1-macro no full — mais sensível a tweets fora do padrão dos exemplos escolhidos
+- `not_toxic` estável: F1 entre 0.82–0.87 em todas as variantes no dataset completo
 
 ---
 

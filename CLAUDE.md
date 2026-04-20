@@ -52,6 +52,7 @@ Evaluate **Qwen3.5** (via Ollama, 100% local) on toxic content moderation in Bra
 | `05_few_shot_v2_2ex_antibias.ipynb` | Done | `results/few_shot_v2_2ex_antibias.csv` |
 | `05_few_shot_v3_2ex.ipynb` | Done | `results/few_shot_v3_2ex.csv` |
 | `06_results_analysis.ipynb` | Done | `results/metrics_summary.json` |
+| `09_results_analysis_full.ipynb` | Done | `results/full/metrics_summary.json` |
 
 ## Variantes de prompting
 
@@ -100,22 +101,33 @@ O Ollama roda no WSL (Ubuntu 24.04), não no Windows nativo. Configurações nec
 - Tweet length is similar across categories (~87 chars average); `insult` slightly longer (~93)
 - 361 duplicate tweets (1.72%) exist in the full dataset — already accounted for in the sample
 
-### Resultados dos experimentos (amostra de 500 tweets — dataset completo ainda a ser avaliado)
+### Resultados dos experimentos — dataset completo (20.813 tweets)
 
-| Variante | F1-macro | F1-weighted | Accuracy |
-|---|---|---|---|
-| **FS-v1 1-Example** | **0.2994** | 0.7710 | 75.4% |
-| FS-v2 2ex+Antibias | 0.2750 | 0.7712 | 76.0% |
-| ZS-v2 Descriptions | 0.2673 | 0.7050 | 65.6% |
-| FS-v3 2-Examples | 0.2606 | 0.7659 | 76.6% |
-| ZS-v3 No-Antibias | 0.2516 | 0.7197 | 70.4% |
-| ZS-v1 Base | 0.2347 | 0.7317 | 75.2% |
+| Variante | F1-macro | F1-weighted |
+|---|---|---|
+| **FS-v2 2ex+Antibias** | **0.3173** | 0.7666 |
+| ZS-v2 Descriptions | 0.2875 | 0.7240 |
+| FS-v3 2-Examples | 0.2747 | 0.7659 |
+| FS-v1 1-Example | 0.2706 | 0.7547 |
+| ZS-v1 Base | 0.2238 | 0.7501 |
+| ZS-v3 No-Antibias | 0.2206 | 0.7376 |
+
+### Resultados da amostra de validação (500 tweets)
+
+| Variante | F1-macro | F1-weighted |
+|---|---|---|
+| **FS-v1 1-Example** | **0.2994** | 0.7710 |
+| FS-v2 2ex+Antibias | 0.2750 | 0.7712 |
+| ZS-v2 Descriptions | 0.2673 | 0.7050 |
+| FS-v3 2-Examples | 0.2606 | 0.7659 |
+| ZS-v3 No-Antibias | 0.2516 | 0.7197 |
+| ZS-v1 Base | 0.2347 | 0.7317 |
 
 ### Interpretações
-- Few-shot supera zero-shot: os 3 melhores F1-macro são todos few-shot
-- Mais exemplos ≠ melhor: FS-v1 (1 exemplo) > FS-v3 (2 exemplos) — prompt mais limpo pode reduzir confusão
-- Instrução de antibias não ajudou: FS-v2 ficou abaixo de FS-v1
-- Classes raras (misogyny, racism, xenophobia) com F1=0 em todas as variantes — insuficiente no sample
-- `not_toxic` estável em ~0.86–0.88 F1 em todas as variantes
-- `obscene` é a categoria tóxica melhor classificada (~0.25–0.41 F1)
-- Accuracy enganosa (65–77%): confirma F1-macro como métrica correta para este dataset
+- FS-v2 domina no full: era 2º no sample (+0.0423 F1-macro) — antibias + 2 exemplos venceu em escala
+- Sample não discriminou variantes próximas: inversão FS-v2↔FS-v1 só ficou clara nos 20k tweets
+- Few-shot supera zero-shot: 3 das 4 melhores variantes são few-shot
+- ZS-v2 destaca-se entre zero-shot: descrições de categoria chegam ao 2º lugar geral
+- Classes raras ganham suporte real: racism (21), xenophobia (31), misogyny (44) — saem do zero no full
+- `not_toxic` estável em 0.82–0.87 F1 em todas as variantes no dataset completo
+- `obscene` é a categoria tóxica melhor classificada (~0.22–0.39 F1 no full)
