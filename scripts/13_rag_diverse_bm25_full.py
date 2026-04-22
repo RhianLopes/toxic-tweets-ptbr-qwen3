@@ -1,0 +1,151 @@
+import time
+from pathlib import Path
+from concurrent.futures import ThreadPoolExecutor
+import polars as pl
+import requests
+from rank_bm25 import BM25Okapi
+from sklearn.metrics import classification_report, f1_score
+
+ROOT = Path(__file__).parent.parent
+OLLAMA_BASE = "http://127.0.0.1:11434"
+MODEL = "qwen3.5:9b"
+VALID_LABELS = {"NOT_TOXIC", "OBSCENE", "INSULT", "HOMOPHOBIA", "RACISM", "MISOGYNY", "XENOPHOBIA"}
+CATEGORIES = ["not_toxic", "obscene", "insult", "homophobia", "racism", "misogyny", "xenophobia"]
+OUTPUT = ROOT / "results" / "full" / "rag_diverse_bm25_k1.csv"
+CHECKPOINT_EVERY = 500
+WORKERS = 2
+
+Path(OUTPUT).parent.mkdir(parents=True, exist_ok=True)
+
+# --- Corpus de retrieval ---
+train_df = pl.read_csv(ROOT / "data" / "full" / "toldBr_train.csv")
+train_texts = train_df["text"].to_list()
+train_labels = train_df["label"].to_list()
+print(f"Corpus: {len(train_texts)} tweets")
+
+# --- Índices e índices BM25 por categoria ---
+corpus_by_cat = {cat: [] for cat in CATEGORIES}
+for i, label in enumerate(train_labels):
+    if label in corpus_by_cat:
+        corpus_by_cat[label].append(i)
+
+tokenized_by_cat = {
+    cat: [train_texts[i].lower().split() for i in idxs]
+    for cat, idxs in corpus_by_cat.items()
+    if idxs
+}
+bm25_by_cat = {cat: BM25Okapi(tokens) for cat, tokens in tokenized_by_cat.items()}
+
+for cat, idxs in corpus_by_cat.items():
+    print(f"  {cat}: {len(idxs)} tweets no corpus")
+
+# --- Dataset de validação ---
+val_df = pl.read_csv(ROOT / "data" / "full" / "toldBr_val.csv")
+val_rows = list(val_df.iter_rows(named=True))
+print(f"Validação: {len(val_rows)} tweets")
+
+
+def retrieve_diverse(query_text: str) -> list[tuple[str, str]]:
+    tokens = query_text.lower().split()
+    examples = []
+    for cat in CATEGORIES:
+        idxs = corpus_by_cat.get(cat, [])
+        if not idxs:
+            continue
+        scores = bm25_by_cat[cat].get_scores(tokens)
+        best_local = int(scores.argmax())
+        best_global = idxs[best_local]
+        examples.append((train_texts[best_global], train_labels[best_global]))
+    return examples  # 7 exemplos, um por categoria
+
+
+def build_prompt(tweet: str, examples: list[tuple[str, str]]) -> str:
+    ex_block = "\n\n".join(
+        f'Comentário: "{text}"\nClassificação: {label.upper()}'
+        for text, label in examples
+    )
+    return (
+        "Você é um sistema de moderação de conteúdo em português brasileiro.\n"
+        "Classifique o comentário em UMA das categorias:\n"
+        "NOT_TOXIC, OBSCENE, INSULT, HOMOPHOBIA, RACISM, MISOGYNY, XENOPHOBIA\n"
+        "Responda APENAS com o nome da categoria.\n\n"
+        f"Exemplos similares (um por categoria):\n{ex_block}\n\n"
+        f"Comentário: {tweet}\n"
+        "Classificação:"
+    )
+
+
+def parse_label(response: str) -> str:
+    text = response.strip().upper().replace(" ", "_")
+    for label in VALID_LABELS:
+        if label in text:
+            return label.lower()
+    return "unknown"
+
+
+# Pré-computa retrieval para todos os tweets do val
+print("Executando retrieval BM25 diverso por categoria...")
+t_ret = time.time()
+all_examples = [retrieve_diverse(r["text"]) for r in val_rows]
+print(f"Retrieval concluído em {time.time()-t_ret:.1f}s")
+
+if Path(OUTPUT).exists():
+    done = pl.read_csv(OUTPUT)
+    start_idx = len(done)
+    resultados = done.to_dicts()
+    print(f"Retomando do índice {start_idx}")
+else:
+    start_idx = 0
+    resultados = []
+    print("Início do zero")
+
+
+def classify(args):
+    i, row, examples = args
+    payload = {
+        "model": MODEL,
+        "prompt": build_prompt(row["text"], examples),
+        "stream": False,
+        "think": False,
+    }
+    r = requests.post(f"{OLLAMA_BASE}/api/generate", json=payload, timeout=60)
+    data = r.json()
+    predicao = parse_label(data["response"])
+    tps = data["eval_count"] / (data["eval_duration"] / 1e9)
+    return {
+        "text": row["text"],
+        "label": row["label"],
+        "predicao": predicao,
+        "resposta_raw": data["response"].strip(),
+        "tokens_s": round(tps, 1),
+    }
+
+
+rows = [
+    (i, val_rows[i], all_examples[i])
+    for i in range(len(val_rows))
+    if i >= start_idx
+]
+total = len(val_rows)
+t0 = time.time()
+
+with ThreadPoolExecutor(max_workers=WORKERS) as executor:
+    for batch_start in range(0, len(rows), CHECKPOINT_EVERY):
+        batch = rows[batch_start : batch_start + CHECKPOINT_EVERY]
+        batch_results = list(executor.map(classify, batch))
+        resultados.extend(batch_results)
+        pl.DataFrame(resultados).write_csv(OUTPUT)
+        total_done = start_idx + batch_start + len(batch)
+        elapsed = time.time() - t0
+        processed_so_far = batch_start + len(batch)
+        eta = (total - total_done) * (elapsed / processed_so_far)
+        print(f"{total_done}/{total} | {elapsed/60:.1f}min | ETA {eta/60:.1f}min")
+
+df = pl.DataFrame(resultados)
+df.write_csv(OUTPUT)
+print(f"\nConcluído em {(time.time()-t0)/60:.1f}min | UNKNOWN: {(df['predicao']=='unknown').sum()}")
+
+y_true, y_pred = df["label"].to_list(), df["predicao"].to_list()
+f1 = f1_score(y_true, y_pred, average="macro", zero_division=0)
+print(f"F1-macro: {f1:.4f}\n")
+print(classification_report(y_true, y_pred, zero_division=0))

@@ -57,7 +57,10 @@ Evaluate **Qwen3.5** (via Ollama, 100% local) on toxic content moderation in Bra
 | `scripts/10_rag_bm25_full.py` | Done | `results/full/rag_bm25_k3.csv` |
 | `scripts/11_rag_vector_full.py` | Done | `results/full/rag_vector_k3.csv` |
 | `scripts/12_rag_hybrid_qdrant_full.py` | Done | `results/full/rag_hybrid_qdrant_k3.csv` |
-| `13_rag_results_analysis.ipynb` | Done | Análise F1 das 3 variantes RAG |
+| `scripts/13_rag_diverse_bm25_full.py` | Done | `results/full/rag_diverse_bm25_k1.csv` |
+| `scripts/14_rag_diverse_vector_full.py` | Done | `results/full/rag_diverse_vector_k1.csv` |
+| `scripts/15_rag_diverse_hybrid_full.py` | Done | `results/full/rag_diverse_hybrid_k1.csv` |
+| `16_rag_results_analysis.ipynb` | Done | Análise F1 das 6 variantes RAG |
 
 ## Variantes de prompting
 
@@ -71,12 +74,19 @@ Evaluate **Qwen3.5** (via Ollama, 100% local) on toxic content moderation in Bra
 - **v2 2ex+Antibias** — 2 exemplos + instrução de mitigação de viés
 - **v3 2-Examples** — 2 exemplos sem instrução de viés
 
-### RAG (10-12) — split 80/20 estratificado (16.800 train / 4.200 val)
-- **BM25** — top-3 tweets mais similares via BM25 Okapi (`rank-bm25`)
+### RAG (10-15) — split 80/20 estratificado (16.800 train / 4.200 val)
+
+**K=3 global (top-3 mais similares):**
+- **BM25** — top-3 via BM25 Okapi (`rank-bm25`)
 - **Vector** — top-3 via embeddings MiniLM-L12 multilingual + cosine similarity
-- **Hybrid Qdrant** — top-3 via busca híbrida: dense (MiniLM) + sparse (TF-IDF) fundidos com RRF no Qdrant in-memory
-  - Embeddings do corpus cacheados em `data/full/train_embeddings.npy`
-  - TF-IDF usado em vez de BM25 no sparse: tweets curtos (~87 chars) eliminam a vantagem de normalização do BM25
+- **Hybrid Qdrant** — top-3 via dense (MiniLM) + sparse (TF-IDF) fundidos com RRF no Qdrant in-memory
+
+**Diversidade forçada (top-1 por categoria = 7 exemplos):**
+- **Diverse BM25** — BM25 dentro de cada categoria: melhor tweet de cada uma das 7 classes
+- **Diverse Vector** — MiniLM top-1 por categoria: maior cosine similarity dentro de cada classe
+- **Diverse Hybrid** — 7 Qdrant collections in-memory (uma por categoria), RRF sem filtros
+
+Embeddings do corpus cacheados em `data/full/train_embeddings.npy`. TF-IDF usado no sparse: tweets curtos (~87 chars) eliminam a vantagem de normalização do BM25. 7 collections separadas contornam a limitação do Qdrant in-memory (sem suporte a payload index).
 
 ## Ollama / model
 
@@ -146,13 +156,16 @@ O Ollama roda no WSL (Ubuntu 24.04), não no Windows nativo. Configurações nec
 
 ### Resultados RAG — val set 80/20 (4.200 tweets)
 
-| Variante | F1-macro | F1-weighted |
-|---|---|---|
-| **RAG-Hybrid Qdrant RRF** | **0.2986** | 0.7771 |
-| RAG-BM25 (K=3) | 0.2874 | 0.7711 |
-| RAG-Vector MiniLM (K=3) | 0.2647 | 0.7689 |
+| # | Variante | F1-macro | F1-weighted |
+|---|---|---|---|
+| 1 | **RAG-Hybrid Qdrant RRF (K=3)** | **0.2986** | 0.7771 |
+| 2 | RAG-Diverse Vector MiniLM (1/classe) | 0.2890 | 0.7609 |
+| 3 | RAG-BM25 (K=3) | 0.2874 | 0.7711 |
+| 4 | RAG-Diverse Hybrid Qdrant RRF (1/classe) | 0.2847 | 0.7634 |
+| 5 | RAG-Diverse BM25 (1/classe) | 0.2776 | 0.7591 |
+| 6 | RAG-Vector MiniLM (K=3) | 0.2647 | 0.7689 |
 
-- Hybrid venceu: RRF combina léxico (TF-IDF) + semântica (MiniLM), supera ambos isolados
-- BM25 > Vector: vocabulário tóxico específico favorece retrieval léxico sobre semântico
-- RAG-Hybrid (0.2986) é competitivo com FS-v2 (0.3173 no full) sem exemplos fixos manualmente elaborados
+- RAG-Hybrid K=3 lidera (0.2986): competitivo com FS-v2 (0.3173 no full) sem exemplos fixos
+- Diversidade beneficia o dense: Diverse Vector (0.2890) > Vector K=3 (0.2647) — garante 1 exemplo/classe
+- Diversidade não ajuda híbrido/BM25: K=3 global supera variantes diversas nesses métodos
 - Val set tem classes raras muito pequenas (racism=4, xenophobia=6) — F1 dessas classes é ruidoso

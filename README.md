@@ -2,9 +2,9 @@
 
 Classificação de comentários tóxicos em português brasileiro usando **Qwen3.5:9b** via Ollama — 100% local, sem API externa, rodando na GPU.
 
-Dataset: **ToLD-Br** (21.000 tweets anotados). Estratégias avaliadas: 3 variantes de zero-shot, 3 de few-shot e **3 variantes de RAG** (Retrieval-Augmented Generation).
+Dataset: **ToLD-Br** (21.000 tweets anotados). Estratégias avaliadas: 3 variantes de zero-shot, 3 de few-shot e **6 variantes de RAG** (Retrieval-Augmented Generation).
 
-**Novidade — Experimentos RAG:** em vez de exemplos fixos no prompt (few-shot), o modelo recebe exemplos recuperados dinamicamente por similaridade com o tweet sendo classificado. Foram testadas três estratégias de retrieval: BM25 sparse, dense (embeddings MiniLM multilingual) e busca híbrida (dense + TF-IDF sparse fundidos via Reciprocal Rank Fusion no Qdrant). Os experimentos RAG usam um split 80/20 estratificado do dataset, garantindo separação limpa entre corpus de retrieval e conjunto de avaliação.
+**Novidade — Experimentos RAG:** em vez de exemplos fixos no prompt (few-shot), o modelo recebe exemplos recuperados dinamicamente por similaridade com o tweet sendo classificado. Foram testadas seis estratégias de retrieval em dois grupos: K=3 global (top-3 mais similares do corpus) e diversidade forçada (top-1 por categoria, cobertura garantida das 7 classes). Estratégias de busca: BM25 sparse, dense (embeddings MiniLM multilingual) e busca híbrida (dense + TF-IDF sparse fundidos via Reciprocal Rank Fusion no Qdrant). Os experimentos RAG usam um split 80/20 estratificado do dataset, garantindo separação limpa entre corpus de retrieval e conjunto de avaliação.
 
 ---
 
@@ -20,9 +20,12 @@ Dataset: **ToLD-Br** (21.000 tweets anotados). Estratégias avaliadas: 3 variant
 | **FS-v1 1-Example** | Few-shot | 1 tweet de exemplo por categoria (7 exemplos no total) |
 | **FS-v2 2ex+Antibias** | Few-shot | 2 tweets de exemplo por categoria + instrução de mitigação de viés |
 | **FS-v3 2-Examples** | Few-shot | 2 tweets de exemplo por categoria, sem instrução de viés |
-| **RAG-BM25** | RAG | Top-3 tweets mais similares via BM25 (sparse, overlap de termos) |
-| **RAG-Vector** | RAG | Top-3 tweets mais similares via embeddings MiniLM (dense, semântica) |
-| **RAG-Hybrid** | RAG | Top-3 via busca híbrida: dense + TF-IDF sparse fundidos com RRF no Qdrant |
+| **RAG-BM25 (K=3)** | RAG | Top-3 tweets mais similares via BM25 (sparse, overlap de termos) |
+| **RAG-Vector (K=3)** | RAG | Top-3 tweets mais similares via embeddings MiniLM (dense, semântica) |
+| **RAG-Hybrid (K=3)** | RAG | Top-3 via busca híbrida: dense + TF-IDF sparse fundidos com RRF no Qdrant |
+| **RAG-Diverse BM25** | RAG | Top-1 por categoria via BM25 — 7 exemplos, cobertura garantida de todas as classes |
+| **RAG-Diverse Vector** | RAG | Top-1 por categoria via MiniLM — 7 exemplos, cobertura garantida de todas as classes |
+| **RAG-Diverse Hybrid** | RAG | Top-1 por categoria via busca híbrida Qdrant RRF — 7 exemplos com diversidade forçada |
 
 > **Zero-shot**: o modelo classifica sem ver exemplos — só com a instrução. **Few-shot**: o modelo vê exemplos fixos de cada categoria. **RAG**: o modelo vê exemplos recuperados dinamicamente por similaridade com o tweet em questão.
 
@@ -74,9 +77,12 @@ Dataset: **ToLD-Br** (21.000 tweets anotados). Estratégias avaliadas: 3 variant
 
 | # | Variante | F1-macro | F1-weighted |
 |---|---|---|---|
-| 1 | **RAG-Hybrid Qdrant RRF** | **0.2986** | 0.7771 |
-| 2 | RAG-BM25 (K=3) | 0.2874 | 0.7711 |
-| 3 | RAG-Vector MiniLM (K=3) | 0.2647 | 0.7689 |
+| 1 | **RAG-Hybrid Qdrant RRF (K=3)** | **0.2986** | 0.7771 |
+| 2 | RAG-Diverse Vector MiniLM (1/classe) | 0.2890 | 0.7609 |
+| 3 | RAG-BM25 (K=3) | 0.2874 | 0.7711 |
+| 4 | RAG-Diverse Hybrid Qdrant RRF (1/classe) | 0.2847 | 0.7634 |
+| 5 | RAG-Diverse BM25 (1/classe) | 0.2776 | 0.7591 |
+| 6 | RAG-Vector MiniLM (K=3) | 0.2647 | 0.7689 |
 
 > **Por que TF-IDF e não BM25 no Qdrant híbrido?** A principal vantagem do BM25 sobre o TF-IDF é a normalização por tamanho de documento — tweets têm ~87 caracteres em média, com baixa variação de tamanho, então essa vantagem desaparece. Na prática, BM25 e TF-IDF produzem rankings praticamente idênticos para textos curtos, especialmente dentro de uma fusão RRF que já dilui as diferenças individuais.
 
@@ -88,9 +94,11 @@ Dataset: **ToLD-Br** (21.000 tweets anotados). Estratégias avaliadas: 3 variant
 - **ZS-v2 se destaca entre os zero-shot**: descrições de categoria chegam a 2º lugar geral — compensam parcialmente a ausência de exemplos
 - **Classes raras ganham poder de avaliação**: no dataset completo, racism (21), xenophobia (31) e misogyny (44) saem do zero — FS-v2 atinge F1=0.10/0.12/0.07
 - **Velocidade uniforme**: ~107–127 tokens/s em todas as variantes, independente do tamanho do prompt
-- **RAG-Hybrid é competitivo**: F1-macro=0.2986 no val set — próximo do FS-v2 (0.3173 no full) usando apenas dados do corpus como exemplos, sem engenharia manual de prompts
+- **RAG-Hybrid K=3 lidera com 0.2986**: próximo do FS-v2 (0.3173 no full), sem engenharia manual de prompts
 - **Busca híbrida supera os métodos individuais**: RRF combina o melhor do BM25 (léxico) e do MiniLM (semântica), superando ambos isoladamente
-- **Dense puro ficou em último entre os RAG**: embeddings sozinhos, sem o componente léxico, tiveram desempenho inferior — provavelmente porque tweets tóxicos compartilham vocabulário específico que BM25 captura bem
+- **Diversidade forçada beneficia o dense**: RAG-Diverse Vector (0.2890) supera RAG-Vector K=3 (0.2647) — garantir 1 exemplo por classe corrige o viés de recuperar exemplos da classe majoritária
+- **Diversidade não ajuda o híbrido/BM25**: RAG-Hybrid K=3 (0.2986) > RAG-Diverse Hybrid (0.2847); RAG-BM25 K=3 (0.2874) > RAG-Diverse BM25 (0.2776) — para retrieval léxico, os 3 mais similares já capturam diversidade natural
+- **Dense puro ficou em último entre os K=3**: embeddings sozinhos sem o componente léxico tiveram desempenho inferior — vocabulário tóxico específico favorece retrieval léxico
 
 ---
 
@@ -223,7 +231,7 @@ toxic-tweets-ptbr-qwen3/
 │   ├── 06_results_analysis.ipynb
 │   ├── 09_results_analysis_full.ipynb
 │   ├── 10_rag_data_split.ipynb           # Split 80/20 → toldBr_train/val.csv
-│   └── 13_rag_results_analysis.ipynb     # Análise F1 das variantes RAG
+│   └── 16_rag_results_analysis.ipynb     # Análise F1 das 6 variantes RAG
 ├── scripts/
 │   ├── 07_zero_shot_full_v1_base.py
 │   ├── 07_zero_shot_full_v2_descriptions.py
@@ -231,9 +239,12 @@ toxic-tweets-ptbr-qwen3/
 │   ├── 08_few_shot_full_v1_1ex.py
 │   ├── 08_few_shot_full_v2_2ex_antibias.py
 │   ├── 08_few_shot_full_v3_2ex.py
-│   ├── 10_rag_bm25_full.py               # RAG BM25 sparse
-│   ├── 11_rag_vector_full.py             # RAG dense (MiniLM)
-│   └── 12_rag_hybrid_qdrant_full.py      # RAG híbrido (Qdrant RRF)
+│   ├── 10_rag_bm25_full.py               # RAG BM25 sparse (K=3)
+│   ├── 11_rag_vector_full.py             # RAG dense MiniLM (K=3)
+│   ├── 12_rag_hybrid_qdrant_full.py      # RAG híbrido Qdrant RRF (K=3)
+│   ├── 13_rag_diverse_bm25_full.py       # RAG BM25 diverso (top-1/categoria)
+│   ├── 14_rag_diverse_vector_full.py     # RAG dense diverso (top-1/categoria)
+│   └── 15_rag_diverse_hybrid_full.py     # RAG híbrido diverso (top-1/categoria, 7 collections)
 ├── results/
 │   ├── zero_shot_v1_base.csv
 │   ├── zero_shot_v2_descriptions.csv
@@ -254,6 +265,12 @@ toxic-tweets-ptbr-qwen3/
 │       ├── few_shot_v1_1ex.csv
 │       ├── few_shot_v2_2ex_antibias.csv
 │       ├── few_shot_v3_2ex.csv
+│       ├── rag_bm25_k3.csv
+│       ├── rag_vector_k3.csv
+│       ├── rag_hybrid_qdrant_k3.csv
+│       ├── rag_diverse_bm25_k1.csv
+│       ├── rag_diverse_vector_k1.csv
+│       ├── rag_diverse_hybrid_k1.csv
 │       ├── metrics_summary.json
 │       ├── metrics_per_strategy.csv
 │       ├── ranking_f1_macro.png
@@ -401,7 +418,7 @@ Experimentos com exemplos dinâmicos no prompt — em vez de exemplos fixos (few
 - K=3 exemplos por classificação em todas as variantes
 - Embeddings: `paraphrase-multilingual-MiniLM-L12-v2` (120 MB, multilingual, suporta PT-BR)
 
-**Variantes implementadas:**
+**Variantes K=3 (top-3 global):**
 
 | Script | Retrieval | Detalhe |
 |---|---|---|
@@ -409,9 +426,19 @@ Experimentos com exemplos dinâmicos no prompt — em vez de exemplos fixos (few
 | `scripts/11_rag_vector_full.py` | Dense | MiniLM-L12 + cosine similarity (numpy) |
 | `scripts/12_rag_hybrid_qdrant_full.py` | Híbrido | Qdrant in-memory: dense + TF-IDF sparse, fusão RRF |
 
-> **Obs. técnica — por que TF-IDF e não BM25 no Qdrant:** A vantagem do BM25 sobre TF-IDF é a normalização por comprimento de documento. Tweets têm ~87 caracteres em média com baixíssima variação — essa normalização perde sentido. Na prática, BM25 e TF-IDF produzem rankings quase idênticos para textos curtos, especialmente dentro de uma fusão RRF que já atenua as diferenças individuais entre os métodos.
+**Variantes diversas (top-1 por categoria = 7 exemplos, cobertura garantida):**
 
-**Análise:** `notebooks/13_rag_results_analysis.ipynb`
+| Script | Retrieval | Detalhe |
+|---|---|---|
+| `scripts/13_rag_diverse_bm25_full.py` | BM25 diverso | BM25 por categoria: melhor tweet de cada uma das 7 classes |
+| `scripts/14_rag_diverse_vector_full.py` | Dense diverso | MiniLM top-1 por categoria: maior similaridade cosine dentro de cada classe |
+| `scripts/15_rag_diverse_hybrid_full.py` | Híbrido diverso | 7 Qdrant collections (uma por categoria), RRF, sem filtro — cada collection só tem tweets da sua classe |
+
+> **Por que 7 collections e não filtros?** Qdrant in-memory não suporta payload indexes — filtros forçam scan linear de todos os pontos, tornando a busca proibitivamente lenta (>10 min de retrieval). Com uma collection por categoria, o HNSW opera em subconjuntos pequenos (~2.400 tweets/classe em média), e o retrieval completo leva ~8 minutos para 4.200 tweets × 7 categorias.
+
+> **Por que TF-IDF e não BM25 no Qdrant:** A vantagem do BM25 sobre TF-IDF é a normalização por comprimento de documento. Tweets têm ~87 caracteres em média com baixíssima variação — essa normalização perde sentido. Na prática, BM25 e TF-IDF produzem rankings quase idênticos para textos curtos, especialmente dentro de uma fusão RRF.
+
+**Análise:** `notebooks/16_rag_results_analysis.ipynb`
 
 ### Fase 9 — Análise comparativa full (`09_results_analysis_full.ipynb`)
 
