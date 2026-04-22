@@ -52,6 +52,8 @@ O dataset é altamente desbalanceado (`not_toxic` = 80,65%, `racism` = 0,10%), e
 
 > **Por que F1-macro?** Accuracy é enganosa aqui — um classificador que rotula tudo como `not_toxic` acerta ~80% mas é inútil. O F1-macro calcula o F1 de cada classe separadamente e faz a média simples, penalizando igualmente quem erra `racism` (21 casos) e quem erra `not_toxic` (16.783 casos). Já o F1-weighted pondera pelo tamanho de cada classe: como `not_toxic` domina 80% do dataset, um F1-weighted alto não garante que o modelo acerta as categorias tóxicas — por isso ele aparece nas tabelas como referência, mas não é o critério de ranking.
 
+> **Comparação com o paper original:** O paper do ToLD-Br (Leite et al., ACL 2020) reporta F1-macro = 0.76 com BERTimbau fine-tuned — mas em classificação **binária** (toxic vs. not_toxic), que é um problema substancialmente mais fácil. Nossos experimentos avaliam as **7 categorias simultaneamente**, sem nenhum fine-tuning. A comparação direta dos números não é válida; o que se pode dizer é que um Qwen3.5:9b com few-shot atinge F1-macro = 0.3173 em 7 classes rodando 100% local, sem GPU de datacenter e sem dados de treino rotulados.
+
 ### F1 por categoria — melhor variante no dataset completo (FS-v2)
 
 | Categoria | F1 | Precision | Recall | Support |
@@ -497,6 +499,7 @@ Foram testados dois grupos de variantes:
 
 ### Dataset e modelo
 - [ToLD-Br — dataset original](https://github.com/joaoaleite/ToLD-Br)
+- [Leite et al. (2020) — "Toxic Language Detection in Social Media for Brazilian Portuguese: New Dataset and Multilingual Analysis" (ACL-IJCNLP)](https://aclanthology.org/2020.aacl-main.91/)
 - [Ollama](https://ollama.com)
 - [Qwen3.5](https://ollama.com/library/qwen3.5)
 
