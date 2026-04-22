@@ -29,7 +29,7 @@ uv sync
 
 ## Project goal
 
-Evaluate **Qwen3.5** (via Ollama, 100% local) on toxic content moderation in Brazilian Portuguese, using the **ToLD-Br** dataset. Two prompting strategies are compared: zero-shot and few-shot. Primary metric: **F1-macro** (accuracy is misleading due to class imbalance).
+Evaluate **Qwen3.5** (via Ollama, 100% local) on toxic content moderation in Brazilian Portuguese, using the **ToLD-Br** dataset. Strategies compared: zero-shot, few-shot, and RAG (BM25, dense, hybrid). Primary metric: **F1-macro** (accuracy is misleading due to class imbalance).
 
 ## Dataset
 
@@ -40,7 +40,7 @@ Evaluate **Qwen3.5** (via Ollama, 100% local) on toxic content moderation in Bra
 
 ## Status
 
-| Notebook | Status | Output |
+| Notebook / Script | Status | Output |
 |---|---|---|
 | `01_exploratory_analysis.ipynb` | Done | EDA do ToLD-Br |
 | `02_sampling.ipynb` | Done | `data/sample/toldBr_sample_500.csv` |
@@ -53,6 +53,11 @@ Evaluate **Qwen3.5** (via Ollama, 100% local) on toxic content moderation in Bra
 | `05_few_shot_v3_2ex.ipynb` | Done | `results/few_shot_v3_2ex.csv` |
 | `06_results_analysis.ipynb` | Done | `results/metrics_summary.json` |
 | `09_results_analysis_full.ipynb` | Done | `results/full/metrics_summary.json` |
+| `10_rag_data_split.ipynb` | Done | `data/full/toldBr_train.csv`, `data/full/toldBr_val.csv` |
+| `scripts/10_rag_bm25_full.py` | Done | `results/full/rag_bm25_k3.csv` |
+| `scripts/11_rag_vector_full.py` | Done | `results/full/rag_vector_k3.csv` |
+| `scripts/12_rag_hybrid_qdrant_full.py` | Done | `results/full/rag_hybrid_qdrant_k3.csv` |
+| `13_rag_results_analysis.ipynb` | Done | Análise F1 das 3 variantes RAG |
 
 ## Variantes de prompting
 
@@ -65,6 +70,13 @@ Evaluate **Qwen3.5** (via Ollama, 100% local) on toxic content moderation in Bra
 - **v1 1-Example** — 1 exemplo por categoria no prompt
 - **v2 2ex+Antibias** — 2 exemplos + instrução de mitigação de viés
 - **v3 2-Examples** — 2 exemplos sem instrução de viés
+
+### RAG (10-12) — split 80/20 estratificado (16.800 train / 4.200 val)
+- **BM25** — top-3 tweets mais similares via BM25 Okapi (`rank-bm25`)
+- **Vector** — top-3 via embeddings MiniLM-L12 multilingual + cosine similarity
+- **Hybrid Qdrant** — top-3 via busca híbrida: dense (MiniLM) + sparse (TF-IDF) fundidos com RRF no Qdrant in-memory
+  - Embeddings do corpus cacheados em `data/full/train_embeddings.npy`
+  - TF-IDF usado em vez de BM25 no sparse: tweets curtos (~87 chars) eliminam a vantagem de normalização do BM25
 
 ## Ollama / model
 
@@ -131,3 +143,16 @@ O Ollama roda no WSL (Ubuntu 24.04), não no Windows nativo. Configurações nec
 - Classes raras ganham suporte real: racism (21), xenophobia (31), misogyny (44) — saem do zero no full
 - `not_toxic` estável em 0.82–0.87 F1 em todas as variantes no dataset completo
 - `obscene` é a categoria tóxica melhor classificada (~0.22–0.39 F1 no full)
+
+### Resultados RAG — val set 80/20 (4.200 tweets)
+
+| Variante | F1-macro | F1-weighted |
+|---|---|---|
+| **RAG-Hybrid Qdrant RRF** | **0.2986** | 0.7771 |
+| RAG-BM25 (K=3) | 0.2874 | 0.7711 |
+| RAG-Vector MiniLM (K=3) | 0.2647 | 0.7689 |
+
+- Hybrid venceu: RRF combina léxico (TF-IDF) + semântica (MiniLM), supera ambos isolados
+- BM25 > Vector: vocabulário tóxico específico favorece retrieval léxico sobre semântico
+- RAG-Hybrid (0.2986) é competitivo com FS-v2 (0.3173 no full) sem exemplos fixos manualmente elaborados
+- Val set tem classes raras muito pequenas (racism=4, xenophobia=6) — F1 dessas classes é ruidoso
