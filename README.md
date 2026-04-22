@@ -44,7 +44,7 @@ Dataset: **ToLD-Br** (21.000 tweets anotados). Estratégias avaliadas: 3 variant
 | 5 | ZS-v1 Base | 0.2238 | 0.7501 |
 | 6 | ZS-v3 No-Antibias | 0.2206 | 0.7376 |
 
-> **Métrica principal: F1-macro.** Accuracy é enganosa neste dataset — um classificador que rotula tudo como `not_toxic` acerta ~80% mas é inútil.
+> **Por que F1-macro?** Accuracy é enganosa aqui — um classificador que rotula tudo como `not_toxic` acerta ~80% mas é inútil. O F1-macro calcula o F1 de cada classe separadamente e faz a média simples, penalizando igualmente quem erra `racism` (21 casos) e quem erra `not_toxic` (16.783 casos). Já o F1-weighted pondera pelo tamanho de cada classe: como `not_toxic` domina 80% do dataset, um F1-weighted alto não garante que o modelo acerta as categorias tóxicas — por isso ele aparece nas tabelas como referência, mas não é o critério de ranking.
 
 ### F1 por categoria — melhor variante no dataset completo (FS-v2)
 
