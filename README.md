@@ -94,17 +94,17 @@ O dataset é altamente desbalanceado (`not_toxic` = 80,65%, `racism` = 0,10%), e
 
 ### Conclusões
 
-- **FS-v2 domina no dataset completo**: antibias + 2 exemplos mostrou vantagem real em escala — era 2º no sample, assume o 1º lugar com 20k tweets
+- **FS-v2 domina no dataset completo**: era 2º no sample, assume o 1º com 20k tweets. Antibias + 2 exemplos mostrou vantagem real em escala
 - **Sample não discrimina variantes próximas**: FS-v2 e FS-v1 separadas por 0.02 F1 no sample; no full a diferença sobe para 0.047
 - **Few-shot > zero-shot** em F1-macro: 3 das 4 melhores variantes são few-shot
-- **ZS-v2 se destaca entre os zero-shot**: descrições de categoria chegam a 2º lugar geral — compensam parcialmente a ausência de exemplos
-- **Classes raras ganham poder de avaliação**: no dataset completo, racism (21), xenophobia (31) e misogyny (44) saem do zero — FS-v2 atinge F1=0.10/0.12/0.07
+- **ZS-v2 se destaca entre os zero-shot**: descrições de categoria chegam a 2º lugar geral, compensando parcialmente a ausência de exemplos
+- **Classes raras ganham poder de avaliação no full**: racism (21), xenophobia (31) e misogyny (44) saem do zero; FS-v2 atinge F1=0.10/0.12/0.07
 - **Velocidade uniforme**: ~107–127 tokens/s em todas as variantes, independente do tamanho do prompt
-- **RAG-Hybrid K=3 lidera com 0.2986**: próximo do FS-v2 (0.3173 no full), sem engenharia manual de prompts
-- **Busca híbrida supera os métodos individuais**: RRF combina o melhor do BM25 (léxico) e do MiniLM (semântica), superando ambos isoladamente
-- **Diversidade forçada beneficia o dense**: RAG-Diverse Vector (0.2890) supera RAG-Vector K=3 (0.2647) — garantir 1 exemplo por classe corrige o viés de recuperar exemplos da classe majoritária
-- **Diversidade não ajuda o híbrido/BM25**: RAG-Hybrid K=3 (0.2986) > RAG-Diverse Hybrid (0.2847); RAG-BM25 K=3 (0.2874) > RAG-Diverse BM25 (0.2776) — para retrieval léxico, os 3 mais similares já capturam diversidade natural
-- **Dense puro ficou em último entre os K=3**: embeddings sozinhos sem o componente léxico tiveram desempenho inferior — vocabulário tóxico específico favorece retrieval léxico
+- **RAG-Hybrid K=3 lidera com 0.2986**: próximo do FS-v2 (0.3173 no full), sem engenharia manual de exemplos
+- **Busca híbrida supera os métodos individuais**: RRF combina BM25 (léxico) e MiniLM (semântica), superando ambos isoladamente
+- **Diversidade forçada beneficia o dense**: RAG-Diverse Vector (0.2890) supera RAG-Vector K=3 (0.2647). Com K=3 global, o dense tende a recuperar exemplos da classe majoritária; forçar 1/classe corrige isso
+- **Diversidade não ajuda BM25 nem híbrido**: K=3 global supera as variantes diversas nesses métodos. O retrieval léxico já captura diversidade natural pelo vocabulário do tweet consultado
+- **Dense puro ficou em último entre os K=3**: tweets tóxicos compartilham vocabulário específico que o BM25 captura melhor do que embeddings semânticos
 
 ---
 
@@ -415,40 +415,9 @@ Replicação das 3 variantes zero-shot sobre os 20.813 tweets do dataset complet
 
 Replicação das 3 variantes few-shot sobre o dataset completo. Mesma estrutura dos scripts da Fase 7.
 
-### Fase 10 — RAG (Retrieval-Augmented Generation)
-
-Experimentos com exemplos dinâmicos no prompt — em vez de exemplos fixos (few-shot), o modelo recebe os K tweets mais similares ao tweet sendo classificado, junto com seus labels reais do corpus de treino.
-
-**Setup:**
-- Split 80/20 estratificado: `data/full/toldBr_train.csv` (16.800 tweets, corpus) e `data/full/toldBr_val.csv` (4.200 tweets, avaliação)
-- K=3 exemplos por classificação em todas as variantes
-- Embeddings: `paraphrase-multilingual-MiniLM-L12-v2` (120 MB, multilingual, suporta PT-BR)
-
-**Variantes K=3 (top-3 global):**
-
-| Script | Retrieval | Detalhe |
-|---|---|---|
-| `scripts/10_rag_bm25_full.py` | BM25 | `rank-bm25`, tokenização simples por espaço |
-| `scripts/11_rag_vector_full.py` | Dense | MiniLM-L12 + cosine similarity (numpy) |
-| `scripts/12_rag_hybrid_qdrant_full.py` | Híbrido | Qdrant in-memory: dense + TF-IDF sparse, fusão RRF |
-
-**Variantes diversas (top-1 por categoria = 7 exemplos, cobertura garantida):**
-
-| Script | Retrieval | Detalhe |
-|---|---|---|
-| `scripts/13_rag_diverse_bm25_full.py` | BM25 diverso | BM25 por categoria: melhor tweet de cada uma das 7 classes |
-| `scripts/14_rag_diverse_vector_full.py` | Dense diverso | MiniLM top-1 por categoria: maior similaridade cosine dentro de cada classe |
-| `scripts/15_rag_diverse_hybrid_full.py` | Híbrido diverso | 7 Qdrant collections (uma por categoria), RRF, sem filtro — cada collection só tem tweets da sua classe |
-
-> **Por que 7 collections e não filtros?** Qdrant in-memory não suporta payload indexes — filtros forçam scan linear de todos os pontos, tornando a busca proibitivamente lenta (>10 min de retrieval). Com uma collection por categoria, o HNSW opera em subconjuntos pequenos (~2.400 tweets/classe em média), e o retrieval completo leva ~8 minutos para 4.200 tweets × 7 categorias.
-
-> **Por que TF-IDF e não BM25 no Qdrant:** A vantagem do BM25 sobre TF-IDF é a normalização por comprimento de documento. Tweets têm ~87 caracteres em média com baixíssima variação — essa normalização perde sentido. Na prática, BM25 e TF-IDF produzem rankings quase idênticos para textos curtos, especialmente dentro de uma fusão RRF.
-
-**Análise:** `notebooks/16_rag_results_analysis.ipynb`
-
 ### Fase 9 — Análise comparativa full (`09_results_analysis_full.ipynb`)
 
-Consolidação e comparação das 6 variantes no dataset completo (~20.639 tweets válidos). Inclui comparação sample vs. full para cada variante e análise detalhada de classes raras.
+Consolidação e comparação das 6 variantes (ZS e FS) no dataset completo (20.813 tweets). Inclui comparação sample vs. full para cada variante e análise detalhada de classes raras.
 
 **Ranking final — dataset completo:**
 
@@ -472,12 +441,55 @@ Consolidação e comparação das 6 variantes no dataset completo (~20.639 tweet
 | ZS-v1 Base | 0.2347 | 0.2238 | −0.0109 |
 | ZS-v3 No-Antibias | 0.2516 | 0.2206 | −0.0310 |
 
-**Principais achados:**
-- FS-v2 inverte ranking: era 2º no sample, assume 1º no full (+0.04 F1-macro)
-- Sample estratificado foi representativo: magnitudes de Δ ≤ 0.03 para 5 das 6 variantes
-- Classes raras ganham suporte real: racism (21), xenophobia (31) e misogyny (44) deixam de ser zeradas
-- FS-v1 perde −0.029 F1-macro no full — mais sensível a tweets fora do padrão dos exemplos escolhidos
-- `not_toxic` estável: F1 entre 0.82–0.87 em todas as variantes no dataset completo
+**Achados:**
+- FS-v2 inverte o ranking: era 2º no sample, assume o 1º no full (+0.04 F1-macro). Antibias + 2 exemplos mostrou vantagem real em escala
+- Sample estratificado foi representativo: 5 das 6 variantes tiveram |Δ| ≤ 0.03
+- Classes raras ganham suporte real no full: racism (21), xenophobia (31) e misogyny (44) saem do zero em todas as variantes few-shot
+- FS-v1 perde −0.029 F1-macro ao escalar, mais sensível a tweets fora do padrão dos exemplos escolhidos
+- `not_toxic` estável em F1 entre 0.82–0.87 em todas as variantes
+
+---
+
+### Fase 10 — RAG (Retrieval-Augmented Generation)
+
+No few-shot, os exemplos são fixos: os mesmos 7 ou 14 tweets para todos os 20 mil. No RAG, o prompt é montado dinamicamente: para cada tweet sendo classificado, recupera-se os exemplos mais similares do corpus de treino. A ideia é que exemplos contextualmente próximos ajudem mais do que exemplos genéricos.
+
+Para garantir separação limpa entre corpus de retrieval e conjunto de avaliação, o dataset foi dividido em 80/20 estratificado: 16.800 tweets de treino (corpus) e 4.200 de validação. Os experimentos ZS e FS usam o dataset completo sem split, então os números não são diretamente comparáveis, mas estão na mesma escala.
+
+**Setup:**
+- Split: `data/full/toldBr_train.csv` (16.800 tweets) e `data/full/toldBr_val.csv` (4.200 tweets)
+- Embeddings densos: `paraphrase-multilingual-MiniLM-L12-v2`, 384 dimensões, normalizados (cosine similarity via produto escalar)
+- Cache de embeddings do corpus: `data/full/train_embeddings.npy`
+
+Foram testados dois grupos de variantes:
+
+**K=3 global** — os 3 tweets mais similares do corpus inteiro, sem restrição de classe:
+
+| Script | Retrieval | Detalhe |
+|---|---|---|
+| `scripts/10_rag_bm25_full.py` | BM25 | `rank-bm25`, tokenização por espaço |
+| `scripts/11_rag_vector_full.py` | Dense | MiniLM-L12 + cosine similarity (numpy) |
+| `scripts/12_rag_hybrid_qdrant_full.py` | Híbrido | Qdrant in-memory: dense + TF-IDF sparse, fusão RRF |
+
+**Diversidade forçada** — top-1 por categoria, resultando sempre em 7 exemplos com cobertura de todas as classes:
+
+| Script | Retrieval | Detalhe |
+|---|---|---|
+| `scripts/13_rag_diverse_bm25_full.py` | BM25 diverso | BM25 separado por categoria: o tweet mais similar dentro de cada uma das 7 classes |
+| `scripts/14_rag_diverse_vector_full.py` | Dense diverso | MiniLM top-1 por categoria via similaridade cosine |
+| `scripts/15_rag_diverse_hybrid_full.py` | Híbrido diverso | 7 Qdrant collections in-memory (uma por categoria), RRF dentro de cada collection |
+
+> **Por que 7 collections e não filtros?** Qdrant in-memory não suporta payload indexes — filtros forçam scan linear em todos os pontos, o que tornou o retrieval inviável (>10 min). Com uma collection por categoria, o HNSW opera em subconjuntos menores (~2.400 pontos em média) e o retrieval completo leva ~8 min para 4.200 tweets × 7 categorias.
+
+> **Por que TF-IDF e não BM25 no Qdrant?** A principal vantagem do BM25 é a normalização por comprimento de documento. Tweets têm ~87 caracteres em média com baixíssima variação, então essa normalização não agrega nada. Na prática, BM25 e TF-IDF produzem rankings quase idênticos para textos curtos, especialmente dentro de uma fusão RRF.
+
+**Achados:**
+- O híbrido K=3 ficou em 1º (F1-macro = 0.2986), próximo do melhor few-shot fixo (FS-v2 = 0.3173 no full) sem engenharia manual de exemplos
+- A diversidade forçada ajudou o dense: RAG-Diverse Vector (0.2890) superou RAG-Vector K=3 (0.2647). Com K=3 global, o modelo denso tende a recuperar exemplos da classe majoritária (`not_toxic`), deixando as categorias tóxicas sem representação no prompt
+- A diversidade não ajudou BM25 nem híbrido: RAG-BM25 K=3 (0.2874) > RAG-Diverse BM25 (0.2776); RAG-Hybrid K=3 (0.2986) > RAG-Diverse Hybrid (0.2847). O retrieval léxico já captura diversidade natural pelo próprio vocabulário do tweet consultado
+- Dense puro ficou em último entre os K=3 (0.2647): tweets tóxicos compartilham vocabulário específico que o BM25 captura bem, enquanto embeddings semânticos podem aproximar tweets de classes diferentes se o tom for parecido
+
+**Análise completa:** `notebooks/16_rag_results_analysis.ipynb`
 
 ---
 
