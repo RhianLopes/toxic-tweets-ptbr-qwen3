@@ -1,16 +1,16 @@
 # toxic-tweets-ptbr-qwen3
 
-Até onde modelos de linguagem leves conseguem ir na moderação de conteúdo tóxico em português brasileiro — rodando 100% local, sem custo de API?
+Até onde modelos de linguagem leves conseguem ir na moderação de conteúdo tóxico em português brasileiro, rodando 100% local, sem custo de API?
 
-Este projeto avalia o **Qwen3.5:9b** no dataset **ToLD-Br** (21.000 tweets anotados em 7 categorias de toxicidade), comparando três estratégias de prompting: zero-shot, few-shot e RAG. Tudo rodando localmente via **Ollama** em uma **NVIDIA RTX 5070** (12 GB VRAM) — o modelo ocupa ~6,6 GB VRAM e classifica um tweet em ~0,22s.
+Este projeto avalia o **Qwen3.5:9b** no dataset **ToLD-Br** (21.000 tweets anotados em 7 categorias de toxicidade), comparando três estratégias de prompting: zero-shot, few-shot e RAG. Tudo roda localmente via **Ollama** em uma **NVIDIA RTX 5070** (12 GB VRAM). O modelo ocupa ~6,6 GB VRAM e classifica um tweet em ~0,22s.
 
 A ideia central é entender quanto se consegue extrair de um modelo 9B sem fine-tuning, apenas variando a forma de apresentar a tarefa no prompt:
 
-- **Zero-shot** — só a instrução, sem exemplos
-- **Few-shot** — exemplos fixos de cada categoria no prompt
-- **RAG** — exemplos recuperados dinamicamente por similaridade com o tweet sendo classificado, usando BM25, embeddings densos (MiniLM multilingual) e busca híbrida (Qdrant + RRF)
+- **Zero-shot**: só a instrução, sem exemplos
+- **Few-shot**: exemplos fixos de cada categoria no prompt
+- **RAG**: exemplos recuperados dinamicamente por similaridade com o tweet sendo classificado, usando BM25, embeddings densos (MiniLM multilingual) e busca híbrida (Qdrant + RRF)
 
-O dataset é altamente desbalanceado (`not_toxic` = 80,65%, `racism` = 0,10%), então a métrica principal é **F1-macro** — que trata todas as classes igualmente, independente do tamanho.
+O dataset é altamente desbalanceado (`not_toxic` = 80,65%, `racism` = 0,10%), então a métrica principal é **F1-macro**, que trata todas as classes igualmente independente do tamanho.
 
 ---
 
