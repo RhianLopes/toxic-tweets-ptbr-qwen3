@@ -1,10 +1,16 @@
 # toxic-tweets-ptbr-qwen3
 
-Classificação de comentários tóxicos em português brasileiro usando **Qwen3.5:9b** via Ollama — 100% local, sem API externa, rodando na GPU.
+Até onde modelos de linguagem leves conseguem ir na moderação de conteúdo tóxico em português brasileiro — rodando 100% local, sem custo de API?
 
-Dataset: **ToLD-Br** (21.000 tweets anotados). Estratégias avaliadas: 3 variantes de zero-shot, 3 de few-shot e **6 variantes de RAG** (Retrieval-Augmented Generation).
+Este projeto avalia o **Qwen3.5:9b** no dataset **ToLD-Br** (21.000 tweets anotados em 7 categorias de toxicidade), comparando três estratégias de prompting: zero-shot, few-shot e RAG. Tudo rodando localmente via **Ollama** em uma **NVIDIA RTX 5070** (12 GB VRAM) — o modelo ocupa ~6,6 GB VRAM e classifica um tweet em ~0,22s.
 
-**Novidade — Experimentos RAG:** em vez de exemplos fixos no prompt (few-shot), o modelo recebe exemplos recuperados dinamicamente por similaridade com o tweet sendo classificado. Foram testadas seis estratégias de retrieval em dois grupos: K=3 global (top-3 mais similares do corpus) e diversidade forçada (top-1 por categoria, cobertura garantida das 7 classes). Estratégias de busca: BM25 sparse, dense (embeddings MiniLM multilingual) e busca híbrida (dense + TF-IDF sparse fundidos via Reciprocal Rank Fusion no Qdrant). Os experimentos RAG usam um split 80/20 estratificado do dataset, garantindo separação limpa entre corpus de retrieval e conjunto de avaliação.
+A ideia central é entender quanto se consegue extrair de um modelo 9B sem fine-tuning, apenas variando a forma de apresentar a tarefa no prompt:
+
+- **Zero-shot** — só a instrução, sem exemplos
+- **Few-shot** — exemplos fixos de cada categoria no prompt
+- **RAG** — exemplos recuperados dinamicamente por similaridade com o tweet sendo classificado, usando BM25, embeddings densos (MiniLM multilingual) e busca híbrida (Qdrant + RRF)
+
+O dataset é altamente desbalanceado (`not_toxic` = 80,65%, `racism` = 0,10%), então a métrica principal é **F1-macro** — que trata todas as classes igualmente, independente do tamanho.
 
 ---
 
